@@ -23,6 +23,7 @@
     --radius: 8px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow-anchor: none; }
   body {
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
@@ -73,7 +74,7 @@
   .nav-btn { position: relative; }
   .chat-badge { position: absolute; top: 4px; right: 4px; background: #e74c3c; color: #fff; font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; line-height: 1; pointer-events: none; }
   /* LAYOUT */
-  .page { display: none; padding: 32px; max-width: 1400px; margin: 0 auto; }
+  .page { display: none; padding: 32px; max-width: 1400px; margin: 0 auto; overflow-anchor: none; }
   .page.active { display: block; }
   /* CARDS */
   .card {
@@ -4515,19 +4516,21 @@ function handleLiveRefreshFocusOut() {
 
 async function runLiveRefreshTick() {
   if (liveRefreshPaused || isUserCurrentlyEditing() || liveRefreshInFlight) return;
-  if (!currentUser) return; // not logged in
+  if (!currentUser) return;
   liveRefreshInFlight = true;
   try {
-    // Capture scroll positions BEFORE the async fetch and re-render
+    await refreshLiveData();
+
+    // Capture scroll positions AFTER the network call but BEFORE any DOM changes.
+    // Capturing before the await means the user may have scrolled during the fetch;
+    // capturing here gives us the position they're actually at right now.
     const scrollY = window.scrollY;
     const chatMessagesEl = document.getElementById('chat-messages');
     const chatScrollTop = chatMessagesEl ? chatMessagesEl.scrollTop : null;
     const activityBodyEl = document.getElementById('activity-log-body');
-    const activityScrollTop = activityBodyEl ? activityBodyEl.parentElement?.scrollTop ?? null : null;
+    const activityScrollTop = activityBodyEl?.parentElement ? activityBodyEl.parentElement.scrollTop : null;
 
-    await refreshLiveData();
-
-    // Re-render whichever tab is active
+    // Re-render active tab (replaces innerHTML, which can disturb scroll position)
     const activePage = currentPageId;
     if (activePage === 'dashboard') renderDashboard();
     else if (activePage === 'summary') renderSummary();
@@ -4535,20 +4538,21 @@ async function runLiveRefreshTick() {
     else if (activePage === 'billing') { if (document.getElementById('billing-report')?.innerHTML.trim()) renderBilling(); }
     else if (activePage === 'database') renderDbEmployees();
     else if (activePage === 'activity') renderActivityLog();
-    // 'form' (Log Work) is intentionally excluded — re-rendering would clobber in-progress entry fields.
+    // 'form' intentionally excluded — would clobber in-progress entry fields.
 
     updateChatBadge();
     updateActivityBadge();
 
-    // Restore scroll positions after the next paint so the browser's own
-    // layout-triggered scroll reset (caused by innerHTML changes) doesn't win.
-    // Using requestAnimationFrame ensures our restore runs after the repaint,
-    // eliminating the visible jump that happens with a synchronous scrollTo.
+    // Double-rAF: first frame lets the browser apply the new layout from the
+    // innerHTML replacement; second frame restores scroll after it has settled.
+    // A single rAF fires too early (before layout is committed) and still jumps.
     requestAnimationFrame(() => {
-      window.scrollTo({ top: scrollY, behavior: 'instant' });
-      if (chatMessagesEl && chatScrollTop !== null) chatMessagesEl.scrollTop = chatScrollTop;
-      if (activityBodyEl && activityScrollTop !== null && activityBodyEl.parentElement)
-        activityBodyEl.parentElement.scrollTop = activityScrollTop;
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+        if (chatMessagesEl && chatScrollTop !== null) chatMessagesEl.scrollTop = chatScrollTop;
+        if (activityBodyEl?.parentElement && activityScrollTop !== null)
+          activityBodyEl.parentElement.scrollTop = activityScrollTop;
+      });
     });
   } catch (e) {
     console.error('🔴 Live refresh failed:', e);
