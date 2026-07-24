@@ -788,26 +788,20 @@ function activateApp(user, role) {
   } catch(e) {}
   showPage(lastPage);
   startActivityTracking();
-  // Background poll to keep badge updated on any page
-  setInterval(updateChatBadge, 3000);
-  setInterval(updateActivityBadge, 3000);
-  // Load all data from Supabase, then re-render whichever page we're actually on
-  // (showPage ran with an empty db before this resolved, so tables/reports need a refresh)
+  // Load all data from Supabase, then re-render and connect to Realtime
   loadFromSupabase().then(() => {
-    startChatPolling();
     applySearchableDropdowns();
-    updateActivityBadge();
     const activePage = currentPageId || lastPage;
-    // Re-render directly rather than relying on showPage's internal first-visit/tabState
-    // gating, so saved filters always reflect freshly-loaded data after a refresh.
     if (activePage === 'dashboard') renderDashboard();
     else if (activePage === 'summary') renderSummary();
     else if (activePage === 'payroll') renderPayroll();
     else if (activePage === 'billing') renderBilling();
     else if (activePage === 'database') renderDbEmployees();
     else showPage(activePage);
+    updateChatBadge();
+    updateActivityBadge();
+    startRealtime();
   });
-  startLiveRefresh();
 }
 
 function doLogin() {
@@ -829,9 +823,8 @@ function doLogout(timedOut = false) {
   clearSession();
   try { sessionStorage.removeItem(LAST_PAGE_KEY); } catch(e) {}
   stopActivityTracking();
-  stopChatPolling();
-  stopLiveRefresh();
-  liveRefreshTickCount = 0;
+  stopRealtime();
+  stopFallbackPolling();
   document.getElementById('chat-bubble-btn')?.classList.remove('visible');
   document.getElementById('chat-floating-panel')?.classList.remove('open');
   // Reset ALL tab state — full fresh slate for next login
@@ -1098,53 +1091,6 @@ async function loadFromSupabase() {
 // Lightweight refresh used by the live-refresh loop: re-pulls the live tables
 // without the loading overlay, status banner churn, or the (relatively expensive)
 // hardcoded seed-data dedup check that full loadFromSupabase() runs on login.
-// Tracks how many ticks have passed so slower-changing tables are only
-// re-fetched every 15 ticks (every ~60s) rather than every 4s.
-let liveRefreshTickCount = 0;
-
-async function refreshLiveData() {
-  liveRefreshTickCount++;
-  const isSlowTick = liveRefreshTickCount % 15 === 0;
-  const activePage = currentPageId;
-
-  try {
-    // entries: always fetch — this is the table that changes in real-time
-    const entries = await sbGet('entries', 'order=date.asc');
-    db.entries = entries.map(e => ({
-      id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
-      type: e.type, rate: e.rate, additionalRate: e.additional_rate || 0,
-      notes: e.notes || '', isManual: e.is_manual || false,
-      addedBy: e.added_by || null, rateOverride: e.rate_override ?? undefined
-    }));
-
-    // employee_rates / billing_rates: only re-fetch on slow tick OR when the
-    // Database tab is active (where live updates there actually matter)
-    if (isSlowTick || activePage === 'database') {
-      const [employees, billingRates] = await Promise.all([
-        sbGet('employee_rates', 'order=name.asc'),
-        sbGet('billing_rates', 'order=property.asc')
-      ]);
-      if (employees.length > 0)
-        db.employees = employees.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
-      if (billingRates.length > 0)
-        db.billingRates = billingRates.map(b => ({ property: b.property, rate: b.rate }));
-    }
-
-    // billing_misc: only re-fetch on slow tick OR when Billing tab is active
-    if (isSlowTick || activePage === 'billing') {
-      const billingMiscRows = await sbGet('billing_misc');
-      db.billingMisc = {};
-      billingMiscRows.forEach(row => { db.billingMisc[row.key] = row.data || []; });
-    }
-
-    // messages: chat polling already handles this on its own 3s interval,
-    // so we never need to duplicate that fetch here.
-
-  } catch(e) {
-    console.error('🔴 Live refresh data pull failed:', e);
-  }
-}
-
 function setDbStatus(msg, type) {
   const el = document.getElementById('db-status-banner');
   if (!el) return;
@@ -4175,11 +4121,8 @@ function applySearchableDropdowns() {
   });
 }
 // ==========================================
-// MESSAGES / CHAT (Supabase Realtime)
+// MESSAGES / CHAT
 // ==========================================
-let chatPollTimer = null;
-let lastMsgCount = 0;
-let realtimeChannel = null;
 
 function chatSeenKey() { return 'drs_chat_seen_' + (currentUser || ''); }
 
@@ -4243,7 +4186,6 @@ function fmtChatTime(iso) {
 
 function renderChat() {
   const msgs = loadMessages();
-  lastMsgCount = msgs.length;
   const container = document.getElementById('chat-messages');
   if (!container) return;
 
@@ -4287,28 +4229,6 @@ async function loadChatFromSupabase() {
   db.messages = rows;
   renderChat();
   updateChatBadge();
-}
-
-function startChatRealtime() {
-  // Use Supabase Realtime via polling (pure REST, no WebSocket dependency)
-  startChatPolling();
-}
-
-function startChatPolling() {
-  stopChatPolling();
-  chatPollTimer = setInterval(async () => {
-    const rows = await sbGet('messages', 'order=id.asc');
-    if (rows.length !== lastMsgCount) {
-      db.messages = rows;
-      const panelOpen = document.getElementById('chat-floating-panel')?.classList.contains('open');
-      if (panelOpen) { renderChat(); markChatSeen(); }
-      else updateChatBadge();
-    }
-  }, 3000);
-}
-
-function stopChatPolling() {
-  if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
 }
 
 function toggleChatPanel() {
@@ -4462,103 +4382,178 @@ async function clearActivityLog() {
 }
 
 // ==========================================
-// LIVE REFRESH — re-pulls data and re-renders the active tab every 4s,
-// preserving scroll position and pausing automatically while the user is
-// actively typing/editing anything (inputs, selects, textareas, contenteditable).
+// REALTIME — Supabase WebSocket subscriptions.
+// Zero polling: Supabase pushes a notification over a single persistent
+// WebSocket when any row in our tables changes. We only fetch that one
+// table in response, instead of hammering every table every 4 seconds.
+// Egress: initial load + one targeted fetch per actual change event.
 // ==========================================
-const LIVE_REFRESH_INTERVAL = 4000;
-let liveRefreshTimer = null;
-let liveRefreshPaused = false;
-let liveRefreshInFlight = false;
+let realtimeWs = null;       // the WebSocket connection
+let realtimeHeartbeat = null; // keepalive ping interval
+let realtimeReconnectTimer = null;
+let realtimeRenderInFlight = false;
 
-function isUserCurrentlyEditing() {
-  const el = document.activeElement;
-  if (!el) return false;
-  const tag = el.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-  if (el.isContentEditable) return true;
-  return false;
-}
+// Tables we want change notifications for
+const REALTIME_TABLES = ['entries', 'messages', 'billing_misc', 'employee_rates', 'billing_rates'];
 
-function pauseLiveRefresh() { liveRefreshPaused = true; }
-function resumeLiveRefresh() { liveRefreshPaused = false; }
+// ── Scroll-safe render ──────────────────────────────────────────────────────
+// Captures scroll, re-renders, then restores after two animation frames so the
+// browser's layout-triggered reset and our restore happen in the same paint.
+function realtimeRender() {
+  if (realtimeRenderInFlight) return;
+  realtimeRenderInFlight = true;
 
-function startLiveRefresh() {
-  stopLiveRefresh();
-  // Pause the instant any field gains focus, resume the instant it's released —
-  // this works for every input/select/textarea across every tab without needing
-  // per-field wiring, since focus/blur bubble through the document.
-  document.addEventListener('focusin', handleLiveRefreshFocusIn);
-  document.addEventListener('focusout', handleLiveRefreshFocusOut);
-  liveRefreshTimer = setInterval(runLiveRefreshTick, LIVE_REFRESH_INTERVAL);
-}
+  const scrollY = window.scrollY;
+  const chatEl = document.getElementById('chat-messages');
+  const chatScroll = chatEl ? chatEl.scrollTop : null;
+  const actEl = document.getElementById('activity-log-body');
+  const actScroll = actEl?.parentElement ? actEl.parentElement.scrollTop : null;
 
-function stopLiveRefresh() {
-  if (liveRefreshTimer) { clearInterval(liveRefreshTimer); liveRefreshTimer = null; }
-  document.removeEventListener('focusin', handleLiveRefreshFocusIn);
-  document.removeEventListener('focusout', handleLiveRefreshFocusOut);
-  liveRefreshPaused = false;
-}
+  const activePage = currentPageId;
+  if (activePage === 'dashboard') renderDashboard();
+  else if (activePage === 'summary') renderSummary();
+  else if (activePage === 'payroll') renderPayroll();
+  else if (activePage === 'billing') { if (document.getElementById('billing-report')?.innerHTML.trim()) renderBilling(); }
+  else if (activePage === 'database') renderDbEmployees();
+  else if (activePage === 'activity') renderActivityLog();
+  // 'form' intentionally excluded — never re-render a live entry form.
 
-function handleLiveRefreshFocusIn(e) {
-  const tag = e.target.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
-    pauseLiveRefresh();
-  }
-}
-function handleLiveRefreshFocusOut() {
-  // Small delay so moving focus between two fields (e.g. tabbing) doesn't
-  // briefly resume-then-repause and cause a flicker/refresh mid-edit.
-  setTimeout(() => {
-    if (!isUserCurrentlyEditing()) resumeLiveRefresh();
-  }, 150);
-}
+  updateChatBadge();
+  updateActivityBadge();
 
-async function runLiveRefreshTick() {
-  if (liveRefreshPaused || isUserCurrentlyEditing() || liveRefreshInFlight) return;
-  if (!currentUser) return;
-  liveRefreshInFlight = true;
-  try {
-    await refreshLiveData();
-
-    // Capture scroll positions AFTER the network call but BEFORE any DOM changes.
-    // Capturing before the await means the user may have scrolled during the fetch;
-    // capturing here gives us the position they're actually at right now.
-    const scrollY = window.scrollY;
-    const chatMessagesEl = document.getElementById('chat-messages');
-    const chatScrollTop = chatMessagesEl ? chatMessagesEl.scrollTop : null;
-    const activityBodyEl = document.getElementById('activity-log-body');
-    const activityScrollTop = activityBodyEl?.parentElement ? activityBodyEl.parentElement.scrollTop : null;
-
-    // Re-render active tab (replaces innerHTML, which can disturb scroll position)
-    const activePage = currentPageId;
-    if (activePage === 'dashboard') renderDashboard();
-    else if (activePage === 'summary') renderSummary();
-    else if (activePage === 'payroll') renderPayroll();
-    else if (activePage === 'billing') { if (document.getElementById('billing-report')?.innerHTML.trim()) renderBilling(); }
-    else if (activePage === 'database') renderDbEmployees();
-    else if (activePage === 'activity') renderActivityLog();
-    // 'form' intentionally excluded — would clobber in-progress entry fields.
-
-    updateChatBadge();
-    updateActivityBadge();
-
-    // Double-rAF: first frame lets the browser apply the new layout from the
-    // innerHTML replacement; second frame restores scroll after it has settled.
-    // A single rAF fires too early (before layout is committed) and still jumps.
+  requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollY);
-        if (chatMessagesEl && chatScrollTop !== null) chatMessagesEl.scrollTop = chatScrollTop;
-        if (activityBodyEl?.parentElement && activityScrollTop !== null)
-          activityBodyEl.parentElement.scrollTop = activityScrollTop;
-      });
+      window.scrollTo(0, scrollY);
+      if (chatEl && chatScroll !== null) chatEl.scrollTop = chatScroll;
+      if (actEl?.parentElement && actScroll !== null) actEl.parentElement.scrollTop = actScroll;
+      realtimeRenderInFlight = false;
     });
+  });
+}
+
+// ── Per-table fetch + render ────────────────────────────────────────────────
+async function handleRealtimeChange(table) {
+  if (!currentUser) return;
+  try {
+    if (table === 'entries') {
+      const rows = await sbGet('entries', 'order=date.asc');
+      db.entries = rows.map(e => ({
+        id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
+        type: e.type, rate: e.rate, additionalRate: e.additional_rate || 0,
+        notes: e.notes || '', isManual: e.is_manual || false,
+        addedBy: e.added_by || null, rateOverride: e.rate_override ?? undefined
+      }));
+    } else if (table === 'messages') {
+      const rows = await sbGet('messages', 'order=id.asc');
+      db.messages = rows;
+      const panelOpen = document.getElementById('chat-floating-panel')?.classList.contains('open');
+      if (panelOpen) { renderChat(); markChatSeen(); return; }
+      updateChatBadge();
+      return; // no need for a full page re-render
+    } else if (table === 'billing_misc') {
+      const rows = await sbGet('billing_misc');
+      db.billingMisc = {};
+      rows.forEach(r => { db.billingMisc[r.key] = r.data || []; });
+    } else if (table === 'employee_rates') {
+      const rows = await sbGet('employee_rates', 'order=name.asc');
+      if (rows.length > 0) db.employees = rows.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
+    } else if (table === 'billing_rates') {
+      const rows = await sbGet('billing_rates', 'order=property.asc');
+      if (rows.length > 0) db.billingRates = rows.map(b => ({ property: b.property, rate: b.rate }));
+    }
+    realtimeRender();
   } catch (e) {
-    console.error('🔴 Live refresh failed:', e);
-  } finally {
-    liveRefreshInFlight = false;
+    console.error('🔴 Realtime refetch failed for', table, e);
   }
+}
+
+// ── WebSocket connection ────────────────────────────────────────────────────
+function startRealtime() {
+  stopRealtime();
+  const wsUrl = SB_URL.replace('https://', 'wss://').replace('http://', 'ws://') + '/realtime/v1/websocket?apikey=' + SB_KEY + '&vsn=1.0.0';
+
+  try {
+    realtimeWs = new WebSocket(wsUrl);
+  } catch(e) {
+    console.warn('🟡 Realtime WebSocket failed to construct, falling back to polling.', e);
+    startFallbackPolling();
+    return;
+  }
+
+  realtimeWs.onopen = () => {
+    console.log('🟢 Supabase Realtime connected');
+    clearTimeout(realtimeReconnectTimer);
+
+    // Subscribe to each table's changes in the public schema
+    REALTIME_TABLES.forEach(table => {
+      const msg = JSON.stringify({
+        topic: `realtime:public:${table}`,
+        event: 'phx_join',
+        payload: { config: { broadcast: { self: true }, presence: { key: '' } } },
+        ref: table
+      });
+      realtimeWs.send(msg);
+    });
+
+    // Heartbeat every 25s to keep the connection alive through proxies/firewalls
+    realtimeHeartbeat = setInterval(() => {
+      if (realtimeWs?.readyState === WebSocket.OPEN) {
+        realtimeWs.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: null }));
+      }
+    }, 25000);
+  };
+
+  realtimeWs.onmessage = (event) => {
+    let msg;
+    try { msg = JSON.parse(event.data); } catch { return; }
+
+    // Only act on actual database change events (INSERT/UPDATE/DELETE)
+    if (msg.event !== 'INSERT' && msg.event !== 'UPDATE' && msg.event !== 'DELETE') return;
+
+    // Derive the table name from the subscription topic (e.g. 'realtime:public:entries')
+    const table = (msg.topic || '').split(':').pop();
+    if (REALTIME_TABLES.includes(table)) {
+      handleRealtimeChange(table);
+    }
+  };
+
+  realtimeWs.onerror = (e) => {
+    console.warn('🟡 Realtime WebSocket error, will reconnect.', e);
+  };
+
+  realtimeWs.onclose = () => {
+    console.warn('🟡 Realtime WebSocket closed. Reconnecting in 5s…');
+    clearInterval(realtimeHeartbeat);
+    if (currentUser) {
+      realtimeReconnectTimer = setTimeout(startRealtime, 5000);
+    }
+  };
+}
+
+function stopRealtime() {
+  clearInterval(realtimeHeartbeat);
+  clearTimeout(realtimeReconnectTimer);
+  if (realtimeWs) {
+    realtimeWs.onclose = null; // prevent auto-reconnect on intentional logout
+    realtimeWs.close();
+    realtimeWs = null;
+  }
+}
+
+// ── Fallback polling (only if WebSocket is blocked) ─────────────────────────
+// Some corporate networks block WebSocket. If that happens, we fall back to
+// polling entries every 10s (less frequent than the old 4s to save egress).
+let fallbackTimer = null;
+function startFallbackPolling() {
+  if (fallbackTimer) return;
+  console.log('🟡 Realtime unavailable — using 10s fallback polling.');
+  fallbackTimer = setInterval(async () => {
+    if (!currentUser) return;
+    await handleRealtimeChange('entries');
+  }, 10000);
+}
+function stopFallbackPolling() {
+  if (fallbackTimer) { clearInterval(fallbackTimer); fallbackTimer = null; }
 }
 
 </script>
