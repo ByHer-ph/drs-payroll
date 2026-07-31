@@ -2877,15 +2877,16 @@ function renderDbEmployees() {
     return true;
   });
   const editable = isAdmin();
-  document.getElementById('db-emp-body').innerHTML = rows.map((e,i) => {
-    const idx = db.employees.indexOf(e);
+  document.getElementById('db-emp-body').innerHTML = rows.map(e => {
+    const nameEsc = e.name.replace(/'/g, "\\'");
+    const propEsc = e.property.replace(/'/g, "\\'");
     if (editable) {
       return `<tr>
         <td>${e.name}</td>
         <td>${e.property}</td>
-        <td><input type="number" value="${e.clean}" step="0.01" style="width:90px;" onchange="updateEmpRate(${idx},'clean',this.value)"></td>
-        <td><input type="number" value="${e.inspect}" step="0.01" style="width:90px;" onchange="updateEmpRate(${idx},'inspect',this.value)"></td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteEmpRate(${idx})">✕</button></td>
+        <td><input type="number" value="${e.clean}" step="0.01" style="width:90px;" onchange="updateEmpRate('${nameEsc}','${propEsc}','clean',this.value)"></td>
+        <td><input type="number" value="${e.inspect}" step="0.01" style="width:90px;" onchange="updateEmpRate('${nameEsc}','${propEsc}','inspect',this.value)"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteEmpRate('${nameEsc}','${propEsc}')">✕</button></td>
       </tr>`;
     } else {
       return `<tr>
@@ -2897,17 +2898,22 @@ function renderDbEmployees() {
   }).join('') || '<tr><td colspan="5" class="empty">No records found.</td></tr>';
 }
 
-function updateEmpRate(idx, field, val) {
-  db.employees[idx][field] = parseFloat(val) || 0;
-  sbSaveEmployeeRate(db.employees[idx]);
+function updateEmpRate(empName, empProp, field, val) {
+  const emp = db.employees.find(e => e.name === empName && e.property === empProp);
+  if (!emp) return;
+  emp[field] = parseFloat(val) || 0;
+  sbSaveEmployeeRate(emp);
 }
 
-async function deleteEmpRate(idx) {
+async function deleteEmpRate(empName, empProp) {
   if (!confirm('Remove this rate entry?')) return;
-  const emp = db.employees[idx];
-  db.employees.splice(idx, 1);
-  await sbDeleteEmployeeRate(emp.name, emp.property);
+  await sbDeleteEmployeeRate(empName, empProp);
+  // Re-fetch so local state matches server — don't splice locally since
+  // Realtime may have already updated db.employees asynchronously.
+  const rows = await sbGet('employee_rates', 'order=name.asc');
+  db.employees = rows.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
   renderDbEmployees();
+  applySearchableDropdowns();
 }
 
 function renderDbBilling() {
@@ -2915,14 +2921,14 @@ function renderDbBilling() {
   const filter = document.getElementById('db-billing-filter').value.toLowerCase();
   const rows = db.billingRates.filter(b => !filter || b.property.toLowerCase().includes(filter));
   const editable = isAdmin();
-  document.getElementById('db-billing-body').innerHTML = rows.map((b,i) => {
-    const idx = db.billingRates.indexOf(b);
+  document.getElementById('db-billing-body').innerHTML = rows.map(b => {
+    const propEsc = b.property.replace(/'/g, "\\'");
     if (editable) {
       return `<tr>
         <td>${b.property}</td>
         <td class="muted">${getPropertyGroup(b.property)}</td>
-        <td><input type="number" value="${b.rate}" step="0.01" style="width:100px;" onchange="updateBillingRate(${idx},this.value)"></td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteBillingRate(${idx})">✕</button></td>
+        <td><input type="number" value="${b.rate}" step="0.01" style="width:100px;" onchange="updateBillingRate('${propEsc}',this.value)"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteBillingRate('${propEsc}')">✕</button></td>
       </tr>`;
     } else {
       return `<tr>
@@ -2933,16 +2939,18 @@ function renderDbBilling() {
   }).join('') || '<tr><td colspan="4" class="empty">No records found.</td></tr>';
 }
 
-function updateBillingRate(idx, val) {
-  db.billingRates[idx].rate = parseFloat(val) || 0;
-  sbSaveBillingRate(db.billingRates[idx].property, db.billingRates[idx].rate);
+function updateBillingRate(prop, val) {
+  const b = db.billingRates.find(r => r.property === prop);
+  if (!b) return;
+  b.rate = parseFloat(val) || 0;
+  sbSaveBillingRate(b.property, b.rate);
 }
 
-async function deleteBillingRate(idx) {
+async function deleteBillingRate(prop) {
   if (!confirm('Remove this billing rate?')) return;
-  const prop = db.billingRates[idx].property;
-  db.billingRates.splice(idx, 1);
   await sbDeleteBillingRate(prop);
+  const rows = await sbGet('billing_rates', 'order=property.asc');
+  db.billingRates = rows.map(b => ({ property: b.property, rate: b.rate }));
   renderDbBilling();
 }
 
@@ -2952,13 +2960,22 @@ async function addEmployeeRate() {
   const clean = parseFloat(document.getElementById('new-emp-clean').value) || 0;
   const inspect = parseFloat(document.getElementById('new-emp-inspect').value) || 0;
   if (!name || !prop) { alert('Please select an employee and enter a property name.'); return; }
+  // Check for exact duplicate before saving
+  if (db.employees.find(e => e.name === name && e.property === prop)) {
+    alert(`Rate for ${name} — ${prop} already exists. Edit it in the table above.`); return;
+  }
   const emp = {name, property:prop, clean, inspect};
-  db.employees.push(emp);
   await sbSaveEmployeeRate(emp);
+  // Re-fetch from Supabase so db.employees is always the authoritative server state —
+  // never push locally, which would create a duplicate when Realtime also fires.
+  const rows = await sbGet('employee_rates', 'order=name.asc');
+  db.employees = rows.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
   document.getElementById('new-emp-prop').value = '';
   document.getElementById('new-emp-clean').value = '';
   document.getElementById('new-emp-inspect').value = '';
-  alert(`Rate added: ${name} — ${prop}`);
+  renderDbEmployees();
+  applySearchableDropdowns();
+  showToast(`✓ Rate added: ${name} — ${prop}`);
 }
 
 async function addNewEmployee() {
@@ -2966,10 +2983,11 @@ async function addNewEmployee() {
   if (!name) { alert('Please enter a name.'); return; }
   if (getUniqueEmployees().includes(name)) { alert('Employee already exists.'); return; }
   const emp = {name, property:'Misc', clean:0, inspect:0};
-  db.employees.push(emp);
   await sbSaveEmployeeRate(emp);
+  const rows = await sbGet('employee_rates', 'order=name.asc');
+  db.employees = rows.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
   document.getElementById('new-emp-fullname').value = '';
-  alert(`Employee "${name}" added!`);
+  showToast(`✓ Employee "${name}" added!`);
   initDatabase();
 }
 
@@ -2977,11 +2995,16 @@ async function addBillingProperty() {
   const prop = document.getElementById('new-billing-prop').value.trim();
   const rate = parseFloat(document.getElementById('new-billing-rate').value) || 0;
   if (!prop) { alert('Please enter a property name.'); return; }
-  db.billingRates.push({property:prop, rate});
+  if (db.billingRates.find(b => b.property.toLowerCase() === prop.toLowerCase())) {
+    alert(`Billing property "${prop}" already exists. Edit it in the table above.`); return;
+  }
   await sbSaveBillingRate(prop, rate);
+  const rows = await sbGet('billing_rates', 'order=property.asc');
+  db.billingRates = rows.map(b => ({ property: b.property, rate: b.rate }));
   document.getElementById('new-billing-prop').value = '';
   document.getElementById('new-billing-rate').value = '';
-  alert(`Billing property "${prop}" added!`);
+  renderDbBilling();
+  showToast(`✓ Billing property "${prop}" added!`);
 }
 
 // ==========================================
@@ -4456,10 +4479,10 @@ async function handleRealtimeChange(table) {
       rows.forEach(r => { db.billingMisc[r.key] = r.data || []; });
     } else if (table === 'employee_rates') {
       const rows = await sbGet('employee_rates', 'order=name.asc');
-      if (rows.length > 0) db.employees = rows.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
+      db.employees = rows.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
     } else if (table === 'billing_rates') {
       const rows = await sbGet('billing_rates', 'order=property.asc');
-      if (rows.length > 0) db.billingRates = rows.map(b => ({ property: b.property, rate: b.rate }));
+      db.billingRates = rows.map(b => ({ property: b.property, rate: b.rate }));
     }
     realtimeRender();
   } catch (e) {
