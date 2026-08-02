@@ -4406,22 +4406,40 @@ async function clearActivityLog() {
 
 // ==========================================
 // REALTIME — Supabase WebSocket subscriptions.
-// Zero polling: Supabase pushes a notification over a single persistent
-// WebSocket when any row in our tables changes. We only fetch that one
-// table in response, instead of hammering every table every 4 seconds.
-// Egress: initial load + one targeted fetch per actual change event.
+//
+// Egress strategy:
+//   • One persistent WebSocket — no polling at all during idle.
+//   • Each change event carries the affected row(s) in its payload.
+//     We patch db in-memory directly from that payload — ZERO extra
+//     HTTP fetch needed for the vast majority of changes.
+//   • Only falls back to a targeted single-table fetch when Supabase
+//     omits the payload (rare, e.g. for very large rows).
+//   • Fallback polling (every 30s, entries only) if WebSocket is blocked.
 // ==========================================
-let realtimeWs = null;       // the WebSocket connection
-let realtimeHeartbeat = null; // keepalive ping interval
+let realtimeWs = null;
+let realtimeHeartbeat = null;
 let realtimeReconnectTimer = null;
 let realtimeRenderInFlight = false;
 
-// Tables we want change notifications for
 const REALTIME_TABLES = ['entries', 'messages', 'billing_misc', 'employee_rates', 'billing_rates'];
 
-// ── Scroll-safe render ──────────────────────────────────────────────────────
-// Captures scroll, re-renders, then restores after two animation frames so the
-// browser's layout-triggered reset and our restore happen in the same paint.
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function mapEntry(r) {
+  return {
+    id: r.id, date: r.date, cleaner: r.cleaner, property: r.property,
+    type: r.type, rate: r.rate, additionalRate: r.additional_rate || 0,
+    notes: r.notes || '', isManual: r.is_manual || false,
+    addedBy: r.added_by || null, rateOverride: r.rate_override ?? undefined
+  };
+}
+function mapEmployee(r) {
+  return { name: r.name, property: r.property, clean: r.clean, inspect: r.inspect };
+}
+function mapBillingRate(r) {
+  return { property: r.property, rate: r.rate };
+}
+
+// ── Scroll-safe render ────────────────────────────────────────────────────────
 function realtimeRender() {
   if (realtimeRenderInFlight) return;
   realtimeRenderInFlight = true;
@@ -4439,7 +4457,6 @@ function realtimeRender() {
   else if (activePage === 'billing') { if (document.getElementById('billing-report')?.innerHTML.trim()) renderBilling(); }
   else if (activePage === 'database') renderDbEmployees();
   else if (activePage === 'activity') renderActivityLog();
-  // 'form' intentionally excluded — never re-render a live entry form.
 
   updateChatBadge();
   updateActivityBadge();
@@ -4454,51 +4471,129 @@ function realtimeRender() {
   });
 }
 
-// ── Per-table fetch + render ────────────────────────────────────────────────
-async function handleRealtimeChange(table) {
-  if (!currentUser) return;
+// ── Patch db in-memory from the event payload (no HTTP fetch) ────────────────
+function patchDbFromPayload(table, event, record, oldRecord) {
+  if (table === 'entries') {
+    if (event === 'INSERT') {
+      // Avoid adding a duplicate if the row already exists (our own local save)
+      if (!db.entries.find(e => e.id === record.id)) {
+        db.entries.push(mapEntry(record));
+        db.entries.sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } else if (event === 'UPDATE') {
+      const idx = db.entries.findIndex(e => e.id === record.id);
+      if (idx !== -1) db.entries[idx] = mapEntry(record);
+      else db.entries.push(mapEntry(record));
+    } else if (event === 'DELETE') {
+      const id = (oldRecord || record).id;
+      db.entries = db.entries.filter(e => e.id !== id);
+    }
+
+  } else if (table === 'employee_rates') {
+    const key = r => `${r.name}||${r.property}`;
+    if (event === 'INSERT' || event === 'UPDATE') {
+      const idx = db.employees.findIndex(e => `${e.name}||${e.property}` === key(record));
+      if (idx !== -1) db.employees[idx] = mapEmployee(record);
+      else db.employees.push(mapEmployee(record));
+    } else if (event === 'DELETE') {
+      const ref = oldRecord || record;
+      db.employees = db.employees.filter(e => !(e.name === ref.name && e.property === ref.property));
+    }
+
+  } else if (table === 'billing_rates') {
+    if (event === 'INSERT' || event === 'UPDATE') {
+      const idx = db.billingRates.findIndex(b => b.property === record.property);
+      if (idx !== -1) db.billingRates[idx] = mapBillingRate(record);
+      else db.billingRates.push(mapBillingRate(record));
+    } else if (event === 'DELETE') {
+      const prop = (oldRecord || record).property;
+      db.billingRates = db.billingRates.filter(b => b.property !== prop);
+    }
+
+  } else if (table === 'messages') {
+    if (event === 'INSERT') {
+      if (!db.messages.find(m => m.id === record.id)) {
+        db.messages = [...db.messages, record];
+      }
+    } else if (event === 'UPDATE') {
+      const idx = db.messages.findIndex(m => m.id === record.id);
+      if (idx !== -1) db.messages[idx] = record;
+    } else if (event === 'DELETE') {
+      const id = (oldRecord || record).id;
+      db.messages = db.messages.filter(m => m.id !== id);
+    }
+    // Messages: update chat panel or badge, no full-page render needed
+    const panelOpen = document.getElementById('chat-floating-panel')?.classList.contains('open');
+    if (panelOpen) { renderChat(); markChatSeen(); }
+    else updateChatBadge();
+    return false; // signal: don't call realtimeRender
+
+  } else if (table === 'billing_misc') {
+    if (event === 'INSERT' || event === 'UPDATE') {
+      db.billingMisc[record.key] = record.data || [];
+    } else if (event === 'DELETE') {
+      const key = (oldRecord || record).key;
+      delete db.billingMisc[key];
+    }
+  }
+
+  return true; // signal: call realtimeRender
+}
+
+// ── Fallback: targeted single-table fetch when payload is unavailable ─────────
+async function fetchAndPatchTable(table) {
   try {
     if (table === 'entries') {
       const rows = await sbGet('entries', 'order=date.asc');
-      db.entries = rows.map(e => ({
-        id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
-        type: e.type, rate: e.rate, additionalRate: e.additional_rate || 0,
-        notes: e.notes || '', isManual: e.is_manual || false,
-        addedBy: e.added_by || null, rateOverride: e.rate_override ?? undefined
-      }));
-    } else if (table === 'messages') {
-      const rows = await sbGet('messages', 'order=id.asc');
-      db.messages = rows;
-      const panelOpen = document.getElementById('chat-floating-panel')?.classList.contains('open');
-      if (panelOpen) { renderChat(); markChatSeen(); return; }
-      updateChatBadge();
-      return; // no need for a full page re-render
+      db.entries = rows.map(mapEntry);
+    } else if (table === 'employee_rates') {
+      const rows = await sbGet('employee_rates', 'order=name.asc');
+      db.employees = rows.map(mapEmployee);
+    } else if (table === 'billing_rates') {
+      const rows = await sbGet('billing_rates', 'order=property.asc');
+      db.billingRates = rows.map(mapBillingRate);
     } else if (table === 'billing_misc') {
       const rows = await sbGet('billing_misc');
       db.billingMisc = {};
       rows.forEach(r => { db.billingMisc[r.key] = r.data || []; });
-    } else if (table === 'employee_rates') {
-      const rows = await sbGet('employee_rates', 'order=name.asc');
-      db.employees = rows.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
-    } else if (table === 'billing_rates') {
-      const rows = await sbGet('billing_rates', 'order=property.asc');
-      db.billingRates = rows.map(b => ({ property: b.property, rate: b.rate }));
+    } else if (table === 'messages') {
+      const rows = await sbGet('messages', 'order=id.asc');
+      db.messages = rows;
     }
-    realtimeRender();
-  } catch (e) {
-    console.error('🔴 Realtime refetch failed for', table, e);
+  } catch(e) {
+    console.error('🔴 Fallback fetch failed for', table, e);
   }
 }
 
-// ── WebSocket connection ────────────────────────────────────────────────────
+// ── Main change handler ───────────────────────────────────────────────────────
+async function handleRealtimeChange(table, event, record, oldRecord) {
+  if (!currentUser) return;
+
+  let shouldRender;
+  if (record) {
+    // Payload is present — patch db in-memory, no HTTP request needed
+    shouldRender = patchDbFromPayload(table, event, record, oldRecord);
+  } else {
+    // Payload missing — fall back to a targeted single-table fetch
+    await fetchAndPatchTable(table);
+    shouldRender = (table !== 'messages');
+  }
+
+  if (shouldRender) realtimeRender();
+}
+
+// ── WebSocket connection ──────────────────────────────────────────────────────
 function startRealtime() {
   stopRealtime();
-  const wsUrl = SB_URL.replace('https://', 'wss://').replace('http://', 'ws://') + '/realtime/v1/websocket?apikey=' + SB_KEY + '&vsn=1.0.0';
+  const wsUrl = SB_URL
+    .replace('https://', 'wss://')
+    .replace('http://', 'ws://')
+    + '/realtime/v1/websocket?apikey=' + SB_KEY + '&vsn=1.0.0';
 
   try {
     realtimeWs = new WebSocket(wsUrl);
   } catch(e) {
-    console.warn('🟡 Realtime WebSocket failed to construct, falling back to polling.', e);
+    console.warn('🟡 WebSocket unavailable, using fallback polling.', e);
     startFallbackPolling();
     return;
   }
@@ -4506,19 +4601,19 @@ function startRealtime() {
   realtimeWs.onopen = () => {
     console.log('🟢 Supabase Realtime connected');
     clearTimeout(realtimeReconnectTimer);
+    stopFallbackPolling(); // stop fallback if it was running
 
-    // Subscribe to each table's changes in the public schema
+    // Subscribe to all tables
     REALTIME_TABLES.forEach(table => {
-      const msg = JSON.stringify({
+      realtimeWs.send(JSON.stringify({
         topic: `realtime:public:${table}`,
         event: 'phx_join',
         payload: { config: { broadcast: { self: true }, presence: { key: '' } } },
         ref: table
-      });
-      realtimeWs.send(msg);
+      }));
     });
 
-    // Heartbeat every 25s to keep the connection alive through proxies/firewalls
+    // Heartbeat every 25s — keeps the connection alive through proxies/firewalls
     realtimeHeartbeat = setInterval(() => {
       if (realtimeWs?.readyState === WebSocket.OPEN) {
         realtimeWs.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: null }));
@@ -4526,22 +4621,26 @@ function startRealtime() {
     }, 25000);
   };
 
-  realtimeWs.onmessage = (event) => {
+  realtimeWs.onmessage = (rawEvent) => {
     let msg;
-    try { msg = JSON.parse(event.data); } catch { return; }
+    try { msg = JSON.parse(rawEvent.data); } catch { return; }
 
-    // Only act on actual database change events (INSERT/UPDATE/DELETE)
+    // Only process actual row-change events
     if (msg.event !== 'INSERT' && msg.event !== 'UPDATE' && msg.event !== 'DELETE') return;
 
-    // Derive the table name from the subscription topic (e.g. 'realtime:public:entries')
     const table = (msg.topic || '').split(':').pop();
-    if (REALTIME_TABLES.includes(table)) {
-      handleRealtimeChange(table);
-    }
+    if (!REALTIME_TABLES.includes(table)) return;
+
+    // Extract the row payload that Supabase embeds in the event —
+    // this is the key to zero-fetch updates.
+    const record = msg.payload?.record ?? null;
+    const oldRecord = msg.payload?.old_record ?? null;
+
+    handleRealtimeChange(table, msg.event, record, oldRecord);
   };
 
-  realtimeWs.onerror = (e) => {
-    console.warn('🟡 Realtime WebSocket error, will reconnect.', e);
+  realtimeWs.onerror = () => {
+    console.warn('🟡 Realtime WebSocket error.');
   };
 
   realtimeWs.onclose = () => {
@@ -4563,17 +4662,17 @@ function stopRealtime() {
   }
 }
 
-// ── Fallback polling (only if WebSocket is blocked) ─────────────────────────
-// Some corporate networks block WebSocket. If that happens, we fall back to
-// polling entries every 10s (less frequent than the old 4s to save egress).
+// ── Fallback polling — only activates if WebSocket is blocked ─────────────────
+// 30-second interval, entries only. Much less frequent than the old 4s polling.
 let fallbackTimer = null;
 function startFallbackPolling() {
   if (fallbackTimer) return;
-  console.log('🟡 Realtime unavailable — using 10s fallback polling.');
+  console.log('🟡 Realtime unavailable — fallback polling every 30s.');
   fallbackTimer = setInterval(async () => {
     if (!currentUser) return;
-    await handleRealtimeChange('entries');
-  }, 10000);
+    await fetchAndPatchTable('entries');
+    realtimeRender();
+  }, 30000);
 }
 function stopFallbackPolling() {
   if (fallbackTimer) { clearInterval(fallbackTimer); fallbackTimer = null; }
