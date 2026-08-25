@@ -401,6 +401,60 @@
   .chat-group.me { align-items: flex-end; }
   .chat-group.them { align-items: flex-start; }
   .chat-sender { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 0 4px; }
+
+  /* ── Operations ── */
+  .ops-panel { }
+  .ops-job-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start; }
+  .ops-job-card:hover { border-color:var(--accent); }
+  .ops-job-status { width:8px;flex-shrink:0;border-radius:4px;align-self:stretch;min-height:40px; }
+  .ops-job-status.cleaning { background:var(--green); }
+  .ops-job-status.inspection { background:var(--accent); }
+  .ops-job-status.maintenance { background:#e07070; }
+  .ops-job-status.other { background:var(--text-dim); }
+  .ops-job-body { flex:1;min-width:0; }
+  .ops-job-title { font-weight:600;color:var(--text);font-size:14px;margin-bottom:3px; }
+  .ops-job-meta { font-size:12px;color:var(--text-muted);margin-bottom:6px; }
+  .ops-job-notes { font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:8px; }
+  .ops-job-actions { display:flex;gap:8px;flex-wrap:wrap; }
+  .ops-action-btn { background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px; }
+  .ops-action-btn:hover { border-color:var(--accent);color:var(--accent); }
+  .ops-action-btn.danger:hover { border-color:var(--danger);color:var(--danger); }
+  .ops-date-header { font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent);margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border); }
+  .ops-prop-card { display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border); }
+  .ops-prop-card:last-child { border-bottom:none; }
+  .ops-prop-name { font-weight:600;font-size:14px;color:var(--text); }
+  .ops-prop-meta { font-size:12px;color:var(--text-muted);margin-top:2px; }
+  .ops-cleaner-card { display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border); }
+  .ops-cleaner-card:last-child { border-bottom:none; }
+  .ops-photo-thumb { width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:zoom-in; }
+  .ops-comment-bubble { background:var(--surface2);border-radius:10px;padding:10px 14px;font-size:13px; }
+  .ops-comment-author { font-size:11px;font-weight:600;color:var(--accent);margin-bottom:3px; }
+  .ops-comment-time { font-size:10px;color:var(--text-muted);margin-top:4px; }
+  .ops-status-badge { display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em; }
+  .ops-status-badge.cleaning { background:rgba(91,200,152,0.15);color:var(--green); }
+  .ops-status-badge.inspection { background:rgba(144,224,239,0.15);color:var(--accent); }
+  .ops-status-badge.maintenance { background:rgba(224,112,112,0.15);color:var(--danger); }
+  .ops-status-badge.other { background:rgba(90,143,168,0.15);color:var(--text-muted); }
+
+  /* ── Calendar ── */
+  .cal-grid-header { display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px; }
+  .cal-grid-header > div { text-align:center;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);padding:8px 0; }
+  #cal-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:2px; }
+  .cal-day { background:var(--surface);border:1px solid var(--border);border-radius:6px;min-height:90px;padding:6px;cursor:pointer;transition:border-color 0.15s;overflow:hidden;position:relative; }
+  .cal-day:hover { border-color:var(--accent); }
+  .cal-day.today { border-color:var(--accent);background:rgba(144,224,239,0.05); }
+  .cal-day.today .cal-day-num { color:var(--accent);font-weight:700; }
+  .cal-day.other-month { opacity:0.35; }
+  .cal-day.selected { border-color:var(--accent);border-width:2px;background:rgba(144,224,239,0.07); }
+  .cal-day-num { font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:4px;line-height:1; }
+  .cal-chip { display:block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.5; }
+  .cal-chip.cleaning    { background:rgba(91,200,152,0.25);color:#4ab882;border-left:3px solid var(--green); }
+  .cal-chip.inspection  { background:rgba(144,224,239,0.2);color:var(--accent);border-left:3px solid var(--accent); }
+  .cal-chip.maintenance { background:rgba(224,112,112,0.2);color:#e07070;border-left:3px solid #e07070; }
+  .cal-chip.other       { background:rgba(90,143,168,0.15);color:var(--text-muted);border-left:3px solid var(--text-muted); }
+  .cal-more { font-size:10px;color:var(--text-muted);padding:1px 4px;cursor:pointer; }
+  .cal-day-detail-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px; }
+  .cal-day-detail-title { font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent); }
 </style>
 </head>
 <body>
@@ -417,6 +471,7 @@
         <option value="">— Select your name —</option>
         <option value="Greg">Greg</option>
         <option value="Jeinna">Jeinna</option>
+        <option value="Admin">Admin</option>
       </select>
     </div>
     <div class="form-group">
@@ -680,6 +735,240 @@
   </div>
 </div>
 
+<!-- OPERATIONS (Admin/Ops only — scheduling, comments, photos) -->
+<div id="page-operations" class="page">
+  <div class="section-title">🏠 Operations</div>
+  <div class="section-sub">Schedule cleanings, manage properties and cleaners, add comments and photos.</div>
+
+  <!-- Sub-tabs -->
+  <div class="sub-tabs" id="ops-subtabs">
+    <button class="sub-tab active" onclick="showOpsTab('ops-schedule')">📋 List View</button>
+    <button class="sub-tab" onclick="showOpsTab('ops-calendar')">📅 Calendar</button>
+    <button class="sub-tab" onclick="showOpsTab('ops-properties')">🏢 Properties</button>
+    <button class="sub-tab" onclick="showOpsTab('ops-cleaners')">👤 Cleaners</button>
+  </div>
+
+  <!-- CALENDAR TAB -->
+  <div id="ops-calendar" class="ops-panel" style="display:none;">
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start;">
+
+      <!-- New assignment form (same as list view) -->
+      <div class="card" style="position:sticky;top:20px;">
+        <div class="card-title">➕ New Assignment</div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Property</label>
+          <select id="ops-cal-property"><option value="">— Select Property —</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Cleaner</label>
+          <select id="ops-cal-cleaner"><option value="">— Select Cleaner —</option></select>
+        </div>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="ops-cal-date">
+          </div>
+          <div class="form-group">
+            <label>Time</label>
+            <input type="time" id="ops-cal-time" value="10:00">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Job Type</label>
+          <select id="ops-cal-type">
+            <option value="cleaning">🧹 Cleaning</option>
+            <option value="inspection">🔍 Inspection</option>
+            <option value="maintenance">🔧 Maintenance</option>
+            <option value="other">📋 Other</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Notes</label>
+          <textarea id="ops-cal-notes" placeholder="Special instructions…" style="height:60px;resize:none;"></textarea>
+        </div>
+        <button class="btn btn-green" style="width:100%;" onclick="addScheduleFromCal()">✓ Schedule Job</button>
+        <div id="ops-cal-alert" style="margin-top:12px;"></div>
+        <!-- Legend -->
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Legend</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="cal-chip cleaning" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;"></span>Cleaning</div>
+            <div style="display:flex;align-items:center;gap:8px;"><span class="cal-chip inspection" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;"></span>Inspection</div>
+            <div style="display:flex;align-items:center;gap:8px;"><span class="cal-chip maintenance" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;"></span>Maintenance</div>
+            <div style="display:flex;align-items:center;gap:8px;"><span class="cal-chip other" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;"></span>Other</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <div>
+        <!-- Month navigation -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <button class="btn btn-secondary" onclick="calPrevMonth()" style="padding:8px 16px;">‹ Prev</button>
+          <div id="cal-month-label" style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary" onclick="calGoToday()" style="padding:8px 14px;font-size:12px;">Today</button>
+            <button class="btn btn-secondary" onclick="calNextMonth()" style="padding:8px 16px;">Next ›</button>
+          </div>
+        </div>
+
+        <!-- Day-of-week headers -->
+        <div class="cal-grid-header">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div>
+          <div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+
+        <!-- Calendar grid -->
+        <div id="cal-grid"></div>
+
+        <!-- Expanded day detail panel -->
+        <div id="cal-day-detail" style="display:none;margin-top:16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIST VIEW TAB (renamed from ops-schedule) -->
+  <div id="ops-schedule" class="ops-panel" style="display:none;">
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;">
+      <!-- New assignment form -->
+      <div class="card" style="position:sticky;top:20px;">
+        <div class="card-title">➕ New Assignment</div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Property</label>
+          <select id="ops-sel-property"><option value="">— Select Property —</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Cleaner</label>
+          <select id="ops-sel-cleaner"><option value="">— Select Cleaner —</option></select>
+        </div>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="ops-sel-date">
+          </div>
+          <div class="form-group">
+            <label>Time</label>
+            <input type="time" id="ops-sel-time" value="10:00">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Job Type</label>
+          <select id="ops-sel-type">
+            <option value="cleaning">🧹 Cleaning</option>
+            <option value="inspection">🔍 Inspection</option>
+            <option value="maintenance">🔧 Maintenance</option>
+            <option value="other">📋 Other</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Notes</label>
+          <textarea id="ops-sel-notes" placeholder="Special instructions…" style="height:60px;resize:none;"></textarea>
+        </div>
+        <button class="btn btn-green" style="width:100%;" onclick="addSchedule()">✓ Schedule Job</button>
+        <div id="ops-schedule-alert" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- Schedule board -->
+      <div>
+        <div class="filter-row" style="margin-bottom:16px;">
+          <div class="form-group"><label>Filter Date</label><input type="date" id="ops-filter-date" onchange="renderOpsScheduleBoard()"></div>
+          <div class="form-group"><label>Filter Cleaner</label><select id="ops-filter-cleaner" onchange="renderOpsScheduleBoard()"><option value="">All</option></select></div>
+          <div class="form-group"><label>Filter Property</label><select id="ops-filter-property" onchange="renderOpsScheduleBoard()"><option value="">All</option></select></div>
+          <button class="btn btn-secondary" onclick="clearOpsFilters()" style="margin-bottom:0;">Clear</button>
+        </div>
+        <div id="ops-schedule-board"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROPERTIES TAB -->
+  <div id="ops-properties" class="ops-panel" style="display:none;">
+    <div style="display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start;">
+      <div class="card" style="position:sticky;top:20px;">
+        <div class="card-title">➕ Add Property</div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Property Name</label><input type="text" id="ops-new-prop-name" placeholder="e.g. Dream Huron"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Address</label><input type="text" id="ops-new-prop-address" placeholder="Street address"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Brand / Group</label>
+          <select id="ops-new-prop-group">
+            <option value="Dream">Dream</option>
+            <option value="Thomas">Thomas</option>
+            <option value="Dwellish">Dwellish</option>
+            <option value="Lotus">Lotus</option>
+            <option value="Kinga">Kinga</option>
+            <option value="Marco">Marco</option>
+            <option value="Village Inn">Village Inn</option>
+            <option value="Ethos">Ethos</option>
+            <option value="Angela">Angela</option>
+            <option value="Daniel">Daniel</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;"><label>Notes</label><textarea id="ops-new-prop-notes" placeholder="Parking, access codes, special instructions…" style="height:70px;resize:none;"></textarea></div>
+        <button class="btn" style="width:100%;" onclick="addOpsProperty()">Add Property</button>
+        <div id="ops-prop-alert" style="margin-top:12px;"></div>
+      </div>
+      <div class="card">
+        <div class="filter-row" style="margin-bottom:12px;">
+          <input type="text" id="ops-prop-search" placeholder="Search properties…" oninput="renderOpsProperties()" style="max-width:260px;">
+        </div>
+        <div id="ops-properties-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLEANERS TAB -->
+  <div id="ops-cleaners" class="ops-panel" style="display:none;">
+    <div style="display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start;">
+      <div class="card" style="position:sticky;top:20px;">
+        <div class="card-title">➕ Add Cleaner</div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Full Name</label><input type="text" id="ops-new-cleaner-name" placeholder="Full name"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Phone</label><input type="text" id="ops-new-cleaner-phone" placeholder="Phone number"></div>
+        <div class="form-group" style="margin-bottom:16px;"><label>Notes</label><textarea id="ops-new-cleaner-notes" placeholder="Notes, specialties…" style="height:60px;resize:none;"></textarea></div>
+        <button class="btn" style="width:100%;" onclick="addOpsCleaner()">Add Cleaner</button>
+        <div id="ops-cleaner-alert" style="margin-top:12px;"></div>
+      </div>
+      <div class="card">
+        <input type="text" id="ops-cleaner-search" placeholder="Search cleaners…" oninput="renderOpsCleaners()" style="max-width:260px;margin-bottom:16px;">
+        <div id="ops-cleaners-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO UPLOAD MODAL -->
+<div id="ops-photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent);">📷 Property Photos</div>
+      <button onclick="closePhotoModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div id="ops-photo-property-name" style="font-size:14px;color:var(--text-muted);margin-bottom:16px;"></div>
+    <div id="ops-photo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;"></div>
+    <label style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px dashed var(--accent);border-radius:var(--radius);padding:14px;cursor:pointer;color:var(--accent);font-size:13px;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      Upload Photos
+      <input type="file" id="ops-photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(event)">
+    </label>
+    <div id="ops-photo-upload-status" style="margin-top:10px;font-size:12px;color:var(--text-muted);"></div>
+  </div>
+</div>
+
+<!-- COMMENT MODAL -->
+<div id="ops-comment-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:480px;max-width:95vw;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent);">💬 Comments</div>
+      <button onclick="closeCommentModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div id="ops-comment-job-info" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);"></div>
+    <div id="ops-comments-list" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
+    <div style="display:flex;gap:8px;">
+      <textarea id="ops-comment-input" placeholder="Add a comment…" rows="2" style="flex:1;resize:none;"></textarea>
+      <button class="btn" onclick="addComment()" style="align-self:flex-end;padding:10px 18px;">Send</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /app-shell -->
 
 <!-- FLOATING CHAT BUBBLE -->
@@ -708,7 +997,8 @@
 // ==========================================
 const USERS = {
   'Greg':   { password: '!Dream678',    role: 'limited' },
-  'Jeinna': { password: '$Jeinna1802$', role: 'admin'   }
+  'Jeinna': { password: '$Jeinna1802$', role: 'admin'   },
+  'Admin':  { password: 'Dream123',     role: 'ops'     }
 };
 
 const SESSION_KEY = 'drs_session';
@@ -719,6 +1009,7 @@ let currentUser = null;
 let currentRole = null;
 
 function isAdmin() { return currentRole === 'admin'; }
+function isOps()   { return currentRole === 'ops'; }
 function canEdit(tab) {
   if (isAdmin()) return true;
   // Greg (non-admin) only gets inline-edit/delete rights on Payroll.
@@ -780,10 +1071,12 @@ function activateApp(user, role) {
   document.getElementById('chat-bubble-btn')?.classList.add('visible');
   buildNav();
   // Restore whichever tab the user was last on (so a page refresh doesn't bounce to Dashboard)
-  let lastPage = 'dashboard';
+  let lastPage = isOps() ? 'operations' : 'dashboard';
   try {
     const saved = sessionStorage.getItem(LAST_PAGE_KEY);
-    const validPages = ['dashboard','form','summary','payroll','billing','database'];
+    const validPages = isOps()
+      ? ['operations']
+      : ['dashboard','form','summary','payroll','billing','database','operations'];
     if (saved && validPages.includes(saved)) lastPage = saved;
   } catch(e) {}
   showPage(lastPage);
@@ -797,6 +1090,7 @@ function activateApp(user, role) {
     else if (activePage === 'payroll') renderPayroll();
     else if (activePage === 'billing') renderBilling();
     else if (activePage === 'database') renderDbEmployees();
+    else if (activePage === 'operations') renderOperations();
     else showPage(activePage);
     updateChatBadge();
     updateActivityBadge();
@@ -860,14 +1154,20 @@ function doLogout(timedOut = false) {
 }
 
 function buildNav() {
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'form',      label: 'Log Work' },
-    { id: 'summary',   label: 'Summary' },
-    { id: 'payroll',   label: 'Payroll' },
-    { id: 'billing',   label: 'Billing' },
-    { id: 'database',  label: 'Database' },
-  ];
+  let tabs;
+  if (isOps()) {
+    tabs = [{ id: 'operations', label: '🏠 Operations' }];
+  } else {
+    tabs = [
+      { id: 'dashboard',  label: 'Dashboard' },
+      { id: 'form',       label: 'Log Work' },
+      { id: 'summary',    label: 'Summary' },
+      { id: 'payroll',    label: 'Payroll' },
+      { id: 'billing',    label: 'Billing' },
+      { id: 'database',   label: 'Database' },
+      { id: 'operations', label: '🏠 Operations' },
+    ];
+  }
   document.getElementById('main-nav').innerHTML = tabs.map(t =>
     `<button class="nav-btn" id="navbtn-${t.id}" onclick="showPage('${t.id}')">${t.label}</button>`
   ).join('');
@@ -1942,6 +2242,7 @@ function showPage(id) {
     renderDbEmployees();
   }
   if (id === 'activity') { renderActivityLog(); markActivitySeen(); }
+  if (id === 'operations') { renderOperations(); }
 }
 
 // ==========================================
@@ -4457,6 +4758,7 @@ function realtimeRender() {
   else if (activePage === 'billing') { if (document.getElementById('billing-report')?.innerHTML.trim()) renderBilling(); }
   else if (activePage === 'database') renderDbEmployees();
   else if (activePage === 'activity') renderActivityLog();
+  else if (activePage === 'operations') renderOperations();
 
   updateChatBadge();
   updateActivityBadge();
@@ -4677,6 +4979,766 @@ function startFallbackPolling() {
 function stopFallbackPolling() {
   if (fallbackTimer) { clearInterval(fallbackTimer); fallbackTimer = null; }
 }
+
+// ==========================================
+// CALENDAR — month grid for Operations tab
+// ==========================================
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-indexed
+let calSelectedDate = null;
+
+function calGoToday() {
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+  calSelectedDate = null;
+  document.getElementById('cal-day-detail').style.display = 'none';
+  renderCalendar();
+}
+function calPrevMonth() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  calSelectedDate = null;
+  document.getElementById('cal-day-detail').style.display = 'none';
+  renderCalendar();
+}
+function calNextMonth() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  calSelectedDate = null;
+  document.getElementById('cal-day-detail').style.display = 'none';
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const label = document.getElementById('cal-month-label');
+  const grid  = document.getElementById('cal-grid');
+  if (!label || !grid) return;
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  label.textContent = `${monthNames[calMonth]} ${calYear}`;
+
+  const props    = opsGetProperties();
+  const cleaners = opsGetCleaners();
+  const schedules = opsGetSchedules();
+
+  // Build a map: dateStr → [schedule, …]
+  const byDate = {};
+  schedules.forEach(s => {
+    if (!byDate[s.date]) byDate[s.date] = [];
+    byDate[s.date].push(s);
+  });
+
+  const today    = new Date().toISOString().slice(0,10);
+  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+
+  const cells = [];
+
+  // Leading days from previous month
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = daysInPrev - i;
+    const m = calMonth === 0 ? 11 : calMonth - 1;
+    const y = calMonth === 0 ? calYear - 1 : calYear;
+    cells.push({ day: d, month: m, year: y, current: false });
+  }
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ day: d, month: calMonth, year: calYear, current: true });
+  }
+  // Trailing days from next month
+  const remaining = 7 - (cells.length % 7);
+  if (remaining < 7) {
+    const m = calMonth === 11 ? 0 : calMonth + 1;
+    const y = calMonth === 11 ? calYear + 1 : calYear;
+    for (let d = 1; d <= remaining; d++) {
+      cells.push({ day: d, month: m, year: y, current: false });
+    }
+  }
+
+  grid.innerHTML = cells.map(cell => {
+    const dateStr = `${cell.year}-${String(cell.month+1).padStart(2,'0')}-${String(cell.day).padStart(2,'0')}`;
+    const jobs = byDate[dateStr] || [];
+    const isToday    = dateStr === today;
+    const isSelected = dateStr === calSelectedDate;
+    const classes    = ['cal-day', !cell.current ? 'other-month' : '', isToday ? 'today' : '', isSelected ? 'selected' : ''].filter(Boolean).join(' ');
+
+    const MAX_CHIPS = 3;
+    const chips = jobs.slice(0, MAX_CHIPS).map(s => {
+      const prop    = props.find(p => p.id === s.propertyId);
+      const cleaner = cleaners.find(c => c.id === s.cleanerId);
+      const label   = prop ? prop.name.replace(/^(Dream|Thomas|Dwellish|Lotus|Kinga|Marco|Village Inn|Ethos|Angela|Daniel)\s*/i,'') : '—';
+      const tip     = `${prop?.name||'?'} · ${cleaner?.name||'?'} · ${s.time||''}`;
+      return `<span class="cal-chip ${s.type}" title="${tip}" onclick="event.stopPropagation();calOpenJob('${s.id}')">${label}</span>`;
+    }).join('');
+
+    const more = jobs.length > MAX_CHIPS
+      ? `<div class="cal-more">+${jobs.length - MAX_CHIPS} more</div>` : '';
+
+    return `<div class="${classes}" onclick="calSelectDay('${dateStr}')">
+      <div class="cal-day-num">${cell.day}</div>
+      ${chips}${more}
+    </div>`;
+  }).join('');
+}
+
+function calSelectDay(dateStr) {
+  calSelectedDate = dateStr;
+  renderCalendar();          // re-render to show selection highlight
+  renderCalDayDetail(dateStr);
+  // Pre-fill the new-assignment date field with the clicked day
+  const dateInput = document.getElementById('ops-cal-date');
+  if (dateInput) dateInput.value = dateStr;
+}
+
+function renderCalDayDetail(dateStr) {
+  const detail = document.getElementById('cal-day-detail');
+  if (!detail) return;
+
+  const props    = opsGetProperties();
+  const cleaners = opsGetCleaners();
+  const jobs     = opsGetSchedules().filter(s => s.date === dateStr);
+
+  const dt = new Date(dateStr + 'T00:00:00');
+  const label = dt.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+
+  if (jobs.length === 0) {
+    detail.style.display = 'block';
+    detail.innerHTML = `
+      <div class="card">
+        <div class="cal-day-detail-header">
+          <div class="cal-day-detail-title">${label}</div>
+          <button onclick="document.getElementById('cal-day-detail').style.display='none';calSelectedDate=null;renderCalendar();" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button>
+        </div>
+        <div style="color:var(--text-muted);font-size:13px;">No jobs scheduled. Fill in the form to add one.</div>
+      </div>`;
+    return;
+  }
+
+  const jobCards = jobs
+    .sort((a,b) => (a.time||'').localeCompare(b.time||''))
+    .map(s => {
+      const prop    = props.find(p => p.id === s.propertyId);
+      const cleaner = cleaners.find(c => c.id === s.cleanerId);
+      const commentCount = opsGetComments(s.id).length;
+      const photoCount   = prop ? opsGetPhotos(prop.id).length : 0;
+      return `
+        <div class="ops-job-card">
+          <div class="ops-job-status ${s.type}"></div>
+          <div class="ops-job-body">
+            <div class="ops-job-title">${prop?.name || '—'}</div>
+            <div class="ops-job-meta">
+              <span class="ops-status-badge ${s.type}">${s.type}</span>
+              &nbsp;·&nbsp; 🕐 ${s.time || '—'}
+              &nbsp;·&nbsp; 👤 ${cleaner?.name || '—'}
+            </div>
+            ${s.notes ? `<div class="ops-job-notes">📝 ${s.notes}</div>` : ''}
+            <div class="ops-job-actions">
+              <button class="ops-action-btn" onclick="openCommentModal('${s.id}')">
+                💬 Comments${commentCount > 0 ? ` (${commentCount})` : ''}
+              </button>
+              ${prop ? `<button class="ops-action-btn" onclick="openPhotoModal('${prop.id}','${prop.name.replace(/'/g,"\\'")}')">
+                📷 Photos${photoCount > 0 ? ` (${photoCount})` : ''}
+              </button>` : ''}
+              <button class="ops-action-btn danger" onclick="calDeleteJob('${s.id}','${dateStr}')">✕ Remove</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+  detail.style.display = 'block';
+  detail.innerHTML = `
+    <div class="card">
+      <div class="cal-day-detail-header">
+        <div class="cal-day-detail-title">${label} <span style="font-size:14px;color:var(--text-muted);font-family:'DM Sans',sans-serif;">(${jobs.length} job${jobs.length>1?'s':''})</span></div>
+        <button onclick="document.getElementById('cal-day-detail').style.display='none';calSelectedDate=null;renderCalendar();" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button>
+      </div>
+      ${jobCards}
+    </div>`;
+}
+
+function calOpenJob(scheduleId) {
+  // Open the comment modal directly when a chip is clicked
+  openCommentModal(scheduleId);
+}
+
+async function calDeleteJob(scheduleId, dateStr) {
+  if (!confirm('Remove this scheduled job? The payroll entry will also be removed.')) return;
+  const schedule = opsGetSchedules().find(s => s.id === scheduleId);
+  await removeScheduleFromPayroll(schedule?.entryId);
+  await opsSave('ops_schedules', opsGetSchedules().filter(s => s.id !== scheduleId));
+  renderCalendar();
+  renderCalDayDetail(dateStr);
+  renderOpsScheduleBoard();
+}
+
+// Calendar-specific schedule form (mirrors addSchedule but uses cal-prefixed inputs)
+async function addScheduleFromCal() {
+  const propId    = document.getElementById('ops-cal-property').value;
+  const cleanerId = document.getElementById('ops-cal-cleaner').value;
+  const date      = document.getElementById('ops-cal-date').value;
+  const time      = document.getElementById('ops-cal-time').value;
+  const type      = document.getElementById('ops-cal-type').value;
+  const notes     = document.getElementById('ops-cal-notes').value.trim();
+  const alertEl   = document.getElementById('ops-cal-alert');
+
+  if (!propId || !cleanerId || !date) {
+    alertEl.innerHTML = `<div class="alert alert-error">⚠ Please select a property, cleaner, and date.</div>`;
+    setTimeout(() => alertEl.innerHTML = '', 3500);
+    return;
+  }
+
+  const schedule = { id: `sch_${Date.now()}`, propertyId: propId, cleanerId, date, time, type, notes, createdBy: currentUser, createdAt: new Date().toISOString() };
+
+  // Create payroll entry first, store its id on the schedule
+  const entryId = await syncScheduleToPayroll(schedule);
+  schedule.entryId = entryId;
+
+  await opsSave('ops_schedules', [...opsGetSchedules(), schedule]);
+
+  document.getElementById('ops-cal-property').value = '';
+  document.getElementById('ops-cal-cleaner').value  = '';
+  document.getElementById('ops-cal-notes').value    = '';
+
+  alertEl.innerHTML = `<div class="alert alert-success">✓ Job scheduled and added to payroll!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 3500);
+
+  renderCalendar();
+  if (date) renderCalDayDetail(date);
+}
+
+// Extend showOpsTab and initOpsScheduleTab to init the calendar dropdowns too
+function initCalTab() {
+  const props    = opsGetProperties();
+  const cleaners = opsGetCleaners();
+
+  const propSel = document.getElementById('ops-cal-property');
+  if (propSel) {
+    const prev = propSel.value;
+    propSel.innerHTML = '<option value="">— Select Property —</option>' +
+      props.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    if (prev) propSel.value = prev;
+  }
+  const cleanerSel = document.getElementById('ops-cal-cleaner');
+  if (cleanerSel) {
+    const prev = cleanerSel.value;
+    cleanerSel.innerHTML = '<option value="">— Select Cleaner —</option>' +
+      cleaners.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    if (prev) cleanerSel.value = prev;
+  }
+  // Default date to today if empty
+  const dateInput = document.getElementById('ops-cal-date');
+  if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0,10);
+
+  renderCalendar();
+}
+
+// ==========================================
+// OPERATIONS — scheduling, comments, photos
+// Stored in billing_misc table using prefixed keys to avoid new table creation:
+//   ops_schedules   → array of job objects
+//   ops_properties  → array of ops property objects
+//   ops_cleaners    → array of ops cleaner objects
+//   ops_comments_<scheduleId> → array of comment objects
+//   ops_photos_<propertyId>   → array of { name, dataUrl, ts } objects
+// ==========================================
+
+// ── Data accessors ──────────────────────────────────────────────────────────
+function opsGetSchedules()   { return db.billingMisc['ops_schedules']   || []; }
+function opsGetProperties()  { return db.billingMisc['ops_properties']  || []; }
+function opsGetCleaners()    { return db.billingMisc['ops_cleaners']    || []; }
+function opsGetComments(sid) { return db.billingMisc[`ops_comments_${sid}`] || []; }
+function opsGetPhotos(pid)   { return db.billingMisc[`ops_photos_${pid}`]   || []; }
+
+async function opsSave(key, data) {
+  if (!db.billingMisc) db.billingMisc = {};
+  db.billingMisc[key] = data;
+  await sbSaveBillingMisc(key, data);
+}
+
+// ── Sub-tab switcher ────────────────────────────────────────────────────────
+function showOpsTab(id) {
+  document.querySelectorAll('.ops-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('#ops-subtabs .sub-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).style.display = '';
+  event.target.classList.add('active');
+  if (id === 'ops-schedule')   initOpsScheduleTab();
+  if (id === 'ops-calendar')   initCalTab();
+  if (id === 'ops-properties') renderOpsProperties();
+  if (id === 'ops-cleaners')   renderOpsCleaners();
+}
+
+// ── Main render entry ───────────────────────────────────────────────────────
+function renderOperations() {
+  initOpsScheduleTab();
+  initCalTab();
+  renderOpsProperties();
+  renderOpsCleaners();
+}
+
+// ── Populate dropdowns for scheduling form ───────────────────────────────────
+function initOpsScheduleTab() {
+  const props = opsGetProperties();
+  const cleaners = opsGetCleaners();
+
+  const propSel = document.getElementById('ops-sel-property');
+  const filterPropSel = document.getElementById('ops-filter-property');
+  if (propSel) {
+    const prev = propSel.value;
+    propSel.innerHTML = '<option value="">— Select Property —</option>' +
+      props.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    if (prev) propSel.value = prev;
+  }
+  if (filterPropSel) {
+    const prev = filterPropSel.value;
+    filterPropSel.innerHTML = '<option value="">All</option>' +
+      props.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    if (prev) filterPropSel.value = prev;
+  }
+
+  const cleanerSel = document.getElementById('ops-sel-cleaner');
+  const filterCleanerSel = document.getElementById('ops-filter-cleaner');
+  if (cleanerSel) {
+    const prev = cleanerSel.value;
+    cleanerSel.innerHTML = '<option value="">— Select Cleaner —</option>' +
+      cleaners.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    if (prev) cleanerSel.value = prev;
+  }
+  if (filterCleanerSel) {
+    const prev = filterCleanerSel.value;
+    filterCleanerSel.innerHTML = '<option value="">All</option>' +
+      cleaners.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    if (prev) filterCleanerSel.value = prev;
+  }
+
+  // Default filter date to today
+  const filterDate = document.getElementById('ops-filter-date');
+  if (filterDate && !filterDate.value) {
+    filterDate.value = new Date().toISOString().slice(0,10);
+  }
+
+  renderOpsScheduleBoard();
+}
+
+// ── Schedule board ───────────────────────────────────────────────────────────
+function renderOpsScheduleBoard() {
+  const board = document.getElementById('ops-schedule-board');
+  if (!board) return;
+
+  const filterDate     = document.getElementById('ops-filter-date')?.value || '';
+  const filterCleaner  = document.getElementById('ops-filter-cleaner')?.value || '';
+  const filterProperty = document.getElementById('ops-filter-property')?.value || '';
+
+  let schedules = opsGetSchedules().filter(s => {
+    if (filterDate     && s.date     !== filterDate)     return false;
+    if (filterCleaner  && s.cleanerId !== filterCleaner)  return false;
+    if (filterProperty && s.propertyId !== filterProperty) return false;
+    return true;
+  });
+
+  schedules.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+  if (schedules.length === 0) {
+    board.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">📅</div>No jobs found. Adjust filters or create a new assignment.</div></div>`;
+    return;
+  }
+
+  // Group by date
+  const byDate = {};
+  schedules.forEach(s => { if (!byDate[s.date]) byDate[s.date] = []; byDate[s.date].push(s); });
+
+  const props    = opsGetProperties();
+  const cleaners = opsGetCleaners();
+
+  board.innerHTML = Object.entries(byDate).map(([date, jobs]) => {
+    const label = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+    const jobCards = jobs.map(s => {
+      const prop    = props.find(p => p.id === s.propertyId);
+      const cleaner = cleaners.find(c => c.id === s.cleanerId);
+      const commentCount = opsGetComments(s.id).length;
+      const photoCount   = prop ? opsGetPhotos(prop.id).length : 0;
+      return `
+        <div class="ops-job-card">
+          <div class="ops-job-status ${s.type}"></div>
+          <div class="ops-job-body">
+            <div class="ops-job-title">${prop ? prop.name : '—'}</div>
+            <div class="ops-job-meta">
+              <span class="ops-status-badge ${s.type}">${s.type}</span>
+              &nbsp;·&nbsp; 🕐 ${s.time || '—'}
+              &nbsp;·&nbsp; 👤 ${cleaner ? cleaner.name : '—'}
+              ${prop ? `&nbsp;·&nbsp; 🏘 ${prop.group}` : ''}
+            </div>
+            ${s.notes ? `<div class="ops-job-notes">📝 ${s.notes}</div>` : ''}
+            <div class="ops-job-actions">
+              <button class="ops-action-btn" onclick="openCommentModal('${s.id}')">
+                💬 Comments${commentCount > 0 ? ` (${commentCount})` : ''}
+              </button>
+              ${prop ? `<button class="ops-action-btn" onclick="openPhotoModal('${prop.id}','${prop.name.replace(/'/g,"\\'")}')">
+                📷 Photos${photoCount > 0 ? ` (${photoCount})` : ''}
+              </button>` : ''}
+              <button class="ops-action-btn danger" onclick="deleteSchedule('${s.id}')">✕ Remove</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    return `<div class="ops-date-header">📅 ${label}</div>${jobCards}`;
+  }).join('');
+}
+
+function clearOpsFilters() {
+  document.getElementById('ops-filter-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ops-filter-cleaner').value = '';
+  document.getElementById('ops-filter-property').value = '';
+  renderOpsScheduleBoard();
+}
+
+// ── Add schedule ─────────────────────────────────────────────────────────────
+// ── Payroll sync helpers ──────────────────────────────────────────────────────
+// Called whenever a schedule is created: looks up the cleaner name + property
+// name from the ops data, finds/creates the rate in db.employees, then writes
+// an entry into db.entries (and Supabase) exactly as Log Work would.
+// Returns the new entry id so we can store it on the schedule for later removal.
+async function syncScheduleToPayroll(schedule) {
+  const props    = opsGetProperties();
+  const cleaners = opsGetCleaners();
+  const prop    = props.find(p => p.id === schedule.propertyId);
+  const cleaner = cleaners.find(c => c.id === schedule.cleanerId);
+  if (!prop || !cleaner) return null; // can't sync without names
+
+  const propName    = prop.name;
+  const cleanerName = cleaner.name;
+  // Map ops job type to payroll type
+  const entryType = schedule.type === 'inspection' ? 'inspect'
+                  : schedule.type === 'maintenance' ? 'misc'
+                  : 'clean';
+
+  // Look up the rate — if not found, create a zero-rate record so it
+  // appears in the database and can be updated later without losing the entry.
+  let rate = getRate(cleanerName, propName, entryType);
+  if (rate === 0 && !db.employees.find(e => e.name === cleanerName && e.property === propName)) {
+    const newEmp = { name: cleanerName, property: propName, clean: 0, inspect: 0 };
+    await sbSaveEmployeeRate(newEmp);
+    const rows = await sbGet('employee_rates', 'order=name.asc');
+    db.employees = rows.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
+    rate = 0; // will be 0 until admin sets it in Database tab
+  }
+
+  const entryId = Date.now() + Math.floor(Math.random() * 1000);
+  const entry = {
+    id: entryId,
+    date: schedule.date,
+    cleaner: cleanerName,
+    property: propName,
+    type: entryType,
+    rate,
+    additionalRate: 0,
+    notes: schedule.notes || '',
+    isManual: false,
+    addedBy: schedule.createdBy || 'Admin'
+  };
+
+  db.entries.push(entry);
+  await sbSaveEntry(entry);
+  syncSummaryIfPresent();
+  syncPayrollIfPresent();
+  return entryId;
+}
+
+// Called when a schedule is deleted: removes the linked payroll entry.
+async function removeScheduleFromPayroll(entryId) {
+  if (!entryId) return;
+  db.entries = db.entries.filter(e => e.id !== entryId);
+  await sbDeleteEntry(entryId);
+  syncSummaryIfPresent();
+  syncPayrollIfPresent();
+}
+
+async function addSchedule() {
+  const propId    = document.getElementById('ops-sel-property').value;
+  const cleanerId = document.getElementById('ops-sel-cleaner').value;
+  const date      = document.getElementById('ops-sel-date').value;
+  const time      = document.getElementById('ops-sel-time').value;
+  const type      = document.getElementById('ops-sel-type').value;
+  const notes     = document.getElementById('ops-sel-notes').value.trim();
+  const alertEl   = document.getElementById('ops-schedule-alert');
+
+  if (!propId || !cleanerId || !date) {
+    alertEl.innerHTML = `<div class="alert alert-error">⚠ Please select a property, cleaner, and date.</div>`;
+    setTimeout(() => alertEl.innerHTML = '', 3500);
+    return;
+  }
+
+  const schedule = { id: `sch_${Date.now()}`, propertyId: propId, cleanerId, date, time, type, notes, createdBy: currentUser, createdAt: new Date().toISOString() };
+
+  // Create the payroll entry first, then store its id on the schedule
+  const entryId = await syncScheduleToPayroll(schedule);
+  schedule.entryId = entryId;
+
+  await opsSave('ops_schedules', [...opsGetSchedules(), schedule]);
+
+  document.getElementById('ops-sel-property').value = '';
+  document.getElementById('ops-sel-cleaner').value  = '';
+  document.getElementById('ops-sel-notes').value    = '';
+
+  alertEl.innerHTML = `<div class="alert alert-success">✓ Job scheduled and added to payroll!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 3500);
+  renderOpsScheduleBoard();
+  renderCalendar();
+}
+
+async function deleteSchedule(id) {
+  if (!confirm('Remove this scheduled job? The payroll entry will also be removed.')) return;
+  const schedule = opsGetSchedules().find(s => s.id === id);
+  await removeScheduleFromPayroll(schedule?.entryId);
+  await opsSave('ops_schedules', opsGetSchedules().filter(s => s.id !== id));
+  renderOpsScheduleBoard();
+  renderCalendar();
+}
+
+// ── Properties ───────────────────────────────────────────────────────────────
+function renderOpsProperties() {
+  const list = document.getElementById('ops-properties-list');
+  if (!list) return;
+  const search = (document.getElementById('ops-prop-search')?.value || '').toLowerCase();
+  const props = opsGetProperties().filter(p => !search || p.name.toLowerCase().includes(search) || (p.address||'').toLowerCase().includes(search));
+
+  if (props.length === 0) {
+    list.innerHTML = `<div class="empty" style="padding:40px;"><div class="empty-icon">🏢</div>${search ? 'No matching properties.' : 'No properties added yet.'}</div>`;
+    return;
+  }
+  list.innerHTML = props.map(p => {
+    const photoCount = opsGetPhotos(p.id).length;
+    return `
+    <div class="ops-prop-card">
+      <div>
+        <div class="ops-prop-name">${p.name}</div>
+        <div class="ops-prop-meta">${p.group}${p.address ? ' · ' + p.address : ''}${p.notes ? ' · ' + p.notes : ''}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+        <button class="ops-action-btn" onclick="openPhotoModal('${p.id}','${p.name.replace(/'/g,"\\'")}')">
+          📷${photoCount > 0 ? ` ${photoCount}` : ''}
+        </button>
+        <button class="ops-action-btn danger" onclick="deleteOpsProperty('${p.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addOpsProperty() {
+  const name    = document.getElementById('ops-new-prop-name').value.trim();
+  const address = document.getElementById('ops-new-prop-address').value.trim();
+  const group   = document.getElementById('ops-new-prop-group').value;
+  const notes   = document.getElementById('ops-new-prop-notes').value.trim();
+  const alertEl = document.getElementById('ops-prop-alert');
+  if (!name) { alertEl.innerHTML = `<div class="alert alert-error">⚠ Property name is required.</div>`; setTimeout(() => alertEl.innerHTML='',3000); return; }
+  if (opsGetProperties().find(p => p.name.toLowerCase() === name.toLowerCase())) {
+    alertEl.innerHTML = `<div class="alert alert-error">⚠ Property already exists.</div>`; setTimeout(() => alertEl.innerHTML='',3000); return;
+  }
+  const prop = { id: `prop_${Date.now()}`, name, address, group, notes };
+  await opsSave('ops_properties', [...opsGetProperties(), prop]);
+  document.getElementById('ops-new-prop-name').value = '';
+  document.getElementById('ops-new-prop-address').value = '';
+  document.getElementById('ops-new-prop-notes').value = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✓ Property added!</div>`;
+  setTimeout(() => alertEl.innerHTML='', 3000);
+  renderOpsProperties();
+  initOpsScheduleTab();
+}
+
+async function deleteOpsProperty(id) {
+  if (!confirm('Remove this property?')) return;
+  await opsSave('ops_properties', opsGetProperties().filter(p => p.id !== id));
+  renderOpsProperties();
+  initOpsScheduleTab();
+}
+
+// ── Cleaners ─────────────────────────────────────────────────────────────────
+function renderOpsCleaners() {
+  const list = document.getElementById('ops-cleaners-list');
+  if (!list) return;
+  const search = (document.getElementById('ops-cleaner-search')?.value || '').toLowerCase();
+  const cleaners = opsGetCleaners().filter(c => !search || c.name.toLowerCase().includes(search));
+
+  if (cleaners.length === 0) {
+    list.innerHTML = `<div class="empty" style="padding:40px;"><div class="empty-icon">👤</div>${search ? 'No matching cleaners.' : 'No cleaners added yet.'}</div>`;
+    return;
+  }
+  list.innerHTML = cleaners.map(c => `
+    <div class="ops-cleaner-card">
+      <div>
+        <div class="ops-prop-name">${c.name}</div>
+        <div class="ops-prop-meta">${c.phone ? '📱 ' + c.phone : ''}${c.notes ? (c.phone ? ' · ' : '') + c.notes : ''}</div>
+      </div>
+      <button class="ops-action-btn danger" onclick="deleteOpsCleaner('${c.id}')">✕</button>
+    </div>`).join('');
+}
+
+async function addOpsCleaner() {
+  const name    = document.getElementById('ops-new-cleaner-name').value.trim();
+  const phone   = document.getElementById('ops-new-cleaner-phone').value.trim();
+  const notes   = document.getElementById('ops-new-cleaner-notes').value.trim();
+  const alertEl = document.getElementById('ops-cleaner-alert');
+  if (!name) { alertEl.innerHTML = `<div class="alert alert-error">⚠ Name is required.</div>`; setTimeout(() => alertEl.innerHTML='',3000); return; }
+  if (opsGetCleaners().find(c => c.name.toLowerCase() === name.toLowerCase())) {
+    alertEl.innerHTML = `<div class="alert alert-error">⚠ Cleaner already exists.</div>`; setTimeout(() => alertEl.innerHTML='',3000); return;
+  }
+  const cleaner = { id: `cln_${Date.now()}`, name, phone, notes };
+  await opsSave('ops_cleaners', [...opsGetCleaners(), cleaner]);
+  document.getElementById('ops-new-cleaner-name').value = '';
+  document.getElementById('ops-new-cleaner-phone').value = '';
+  document.getElementById('ops-new-cleaner-notes').value = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✓ Cleaner added!</div>`;
+  setTimeout(() => alertEl.innerHTML='', 3000);
+  renderOpsCleaners();
+  initOpsScheduleTab();
+}
+
+async function deleteOpsCleaner(id) {
+  if (!confirm('Remove this cleaner?')) return;
+  await opsSave('ops_cleaners', opsGetCleaners().filter(c => c.id !== id));
+  renderOpsCleaners();
+  initOpsScheduleTab();
+}
+
+// ── Comments modal ────────────────────────────────────────────────────────────
+let opsActiveScheduleId = null;
+
+function openCommentModal(scheduleId) {
+  opsActiveScheduleId = scheduleId;
+  const modal = document.getElementById('ops-comment-modal');
+  const schedules = opsGetSchedules();
+  const s = schedules.find(x => x.id === scheduleId);
+  const props    = opsGetProperties();
+  const cleaners = opsGetCleaners();
+  const prop    = props.find(p => p.id === s?.propertyId);
+  const cleaner = cleaners.find(c => c.id === s?.cleanerId);
+  document.getElementById('ops-comment-job-info').innerHTML =
+    `<strong>${prop?.name || '—'}</strong> · ${cleaner?.name || '—'} · ${s?.date || '—'} ${s?.time || ''}`;
+  renderComments();
+  modal.style.display = 'flex';
+}
+
+function closeCommentModal() {
+  document.getElementById('ops-comment-modal').style.display = 'none';
+  opsActiveScheduleId = null;
+  renderOpsScheduleBoard();
+}
+
+function renderComments() {
+  const list = document.getElementById('ops-comments-list');
+  if (!list || !opsActiveScheduleId) return;
+  const comments = opsGetComments(opsActiveScheduleId);
+  if (comments.length === 0) {
+    list.innerHTML = `<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">No comments yet. Be the first!</div>`;
+    return;
+  }
+  list.innerHTML = comments.map(c => `
+    <div class="ops-comment-bubble">
+      <div class="ops-comment-author">${c.author}</div>
+      <div>${c.text}</div>
+      <div class="ops-comment-time">${new Date(c.ts).toLocaleString()}</div>
+    </div>`).join('');
+  list.scrollTop = list.scrollHeight;
+}
+
+async function addComment() {
+  const input = document.getElementById('ops-comment-input');
+  const text = input.value.trim();
+  if (!text || !opsActiveScheduleId) return;
+  const comment = { id: `cmt_${Date.now()}`, author: currentUser, text, ts: new Date().toISOString() };
+  const key = `ops_comments_${opsActiveScheduleId}`;
+  const updated = [...opsGetComments(opsActiveScheduleId), comment];
+  await opsSave(key, updated);
+  input.value = '';
+  renderComments();
+}
+
+// ── Photos modal ──────────────────────────────────────────────────────────────
+let opsActivePropertyId = null;
+
+function openPhotoModal(propertyId, propertyName) {
+  opsActivePropertyId = propertyId;
+  document.getElementById('ops-photo-property-name').textContent = propertyName;
+  renderPhotos();
+  document.getElementById('ops-photo-modal').style.display = 'flex';
+}
+
+function closePhotoModal() {
+  document.getElementById('ops-photo-modal').style.display = 'none';
+  opsActivePropertyId = null;
+  renderOpsProperties();
+}
+
+function renderPhotos() {
+  const grid = document.getElementById('ops-photo-grid');
+  if (!grid || !opsActivePropertyId) return;
+  const photos = opsGetPhotos(opsActivePropertyId);
+  if (photos.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">No photos yet. Upload the first one!</div>`;
+    return;
+  }
+  grid.innerHTML = photos.map((ph, i) => `
+    <div style="position:relative;">
+      <img src="${ph.dataUrl}" class="ops-photo-thumb" alt="${ph.name}" onclick="viewFullPhoto('${ph.dataUrl}')">
+      <button onclick="deletePhoto(${i})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;">✕</button>
+      <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ph.name}</div>
+    </div>`).join('');
+}
+
+async function handlePhotoUpload(event) {
+  const files = Array.from(event.target.files);
+  if (!files.length || !opsActivePropertyId) return;
+  const status = document.getElementById('ops-photo-upload-status');
+  status.textContent = `Uploading ${files.length} photo(s)…`;
+
+  const existing = opsGetPhotos(opsActivePropertyId);
+  const newPhotos = [];
+
+  for (const file of files) {
+    await new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        // Compress to max ~800px wide to keep storage small
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxW = 800;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          newPhotos.push({ name: file.name, dataUrl: canvas.toDataURL('image/jpeg', 0.75), ts: new Date().toISOString() });
+          resolve();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const key = `ops_photos_${opsActivePropertyId}`;
+  await opsSave(key, [...existing, ...newPhotos]);
+  event.target.value = '';
+  status.textContent = `✓ ${files.length} photo(s) uploaded.`;
+  setTimeout(() => status.textContent = '', 3000);
+  renderPhotos();
+}
+
+async function deletePhoto(index) {
+  if (!confirm('Remove this photo?')) return;
+  const key = `ops_photos_${opsActivePropertyId}`;
+  const photos = opsGetPhotos(opsActivePropertyId);
+  photos.splice(index, 1);
+  await opsSave(key, photos);
+  renderPhotos();
+}
+
+function viewFullPhoto(dataUrl) {
+  window.open(dataUrl, '_blank');
+}
+
+
 
 </script>
 </body>
