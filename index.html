@@ -440,19 +440,48 @@
   .cal-grid-header { display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px; }
   .cal-grid-header > div { text-align:center;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);padding:8px 0; }
   #cal-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:2px; }
-  .cal-day { background:var(--surface);border:1px solid var(--border);border-radius:6px;min-height:90px;padding:6px;cursor:pointer;transition:border-color 0.15s;overflow:hidden;position:relative; }
+  .cal-day { background:var(--surface);border:1px solid var(--border);border-radius:6px;min-height:110px;padding:6px;cursor:pointer;transition:border-color 0.15s;overflow:hidden; }
   .cal-day:hover { border-color:var(--accent); }
   .cal-day.today { border-color:var(--accent);background:rgba(144,224,239,0.05); }
   .cal-day.today .cal-day-num { color:var(--accent);font-weight:700; }
-  .cal-day.other-month { opacity:0.35; }
+  .cal-day.other-month { opacity:0.3; }
   .cal-day.selected { border-color:var(--accent);border-width:2px;background:rgba(144,224,239,0.07); }
   .cal-day-num { font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:4px;line-height:1; }
-  .cal-chip { display:block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.5; }
+  .cal-chip { display:block;font-size:10px;font-weight:600;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.5; }
   .cal-chip.cleaning    { background:rgba(91,200,152,0.25);color:#4ab882;border-left:3px solid var(--green); }
   .cal-chip.inspection  { background:rgba(144,224,239,0.2);color:var(--accent);border-left:3px solid var(--accent); }
   .cal-chip.maintenance { background:rgba(224,112,112,0.2);color:#e07070;border-left:3px solid #e07070; }
   .cal-chip.other       { background:rgba(90,143,168,0.15);color:var(--text-muted);border-left:3px solid var(--text-muted); }
   .cal-more { font-size:10px;color:var(--text-muted);padding:1px 4px;cursor:pointer; }
+  /* Week view */
+  .cal-week-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:6px; }
+  .cal-week-col { background:var(--surface);border:1px solid var(--border);border-radius:8px;min-height:200px;overflow:hidden; }
+  .cal-week-col.today { border-color:var(--accent); }
+  .cal-week-col-header { padding:8px;text-align:center;border-bottom:1px solid var(--border);background:var(--surface2); }
+  .cal-week-col-daynum { font-size:18px;font-weight:700;color:var(--text);line-height:1; }
+  .cal-week-col-daynum.today-num { color:var(--accent); }
+  .cal-week-col-dayname { font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:2px; }
+  .cal-week-job { margin:6px;padding:7px 8px;border-radius:5px;cursor:pointer;border-left:3px solid; }
+  .cal-week-job.cleaning    { background:rgba(91,200,152,0.15);border-color:var(--green); }
+  .cal-week-job.inspection  { background:rgba(144,224,239,0.12);border-color:var(--accent); }
+  .cal-week-job.maintenance { background:rgba(224,112,112,0.12);border-color:#e07070; }
+  .cal-week-job.other       { background:rgba(90,143,168,0.1);border-color:var(--text-muted); }
+  .cal-week-job-title { font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .cal-week-job-meta  { font-size:10px;color:var(--text-muted);margin-top:2px; }
+  /* Day view */
+  .cal-day-view-job { display:flex;gap:12px;align-items:flex-start;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer; }
+  .cal-day-view-job:hover { border-color:var(--accent); }
+  .cal-day-view-time { font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);flex-shrink:0;width:52px;padding-top:2px;text-align:right; }
+  .cal-day-view-bar { width:4px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:36px; }
+  .cal-day-view-bar.cleaning { background:var(--green); }
+  .cal-day-view-bar.inspection { background:var(--accent); }
+  .cal-day-view-bar.maintenance { background:#e07070; }
+  .cal-day-view-bar.other { background:var(--text-muted); }
+  .cal-day-view-body { flex:1;min-width:0; }
+  .cal-day-view-title { font-weight:600;font-size:14px;color:var(--text);margin-bottom:3px; }
+  .cal-day-view-meta  { font-size:12px;color:var(--text-muted); }
+  /* Active view button */
+  .cal-view-active { background:var(--accent) !important;color:#0f0f0f !important;border-color:var(--accent) !important; }
   .cal-day-detail-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px; }
   .cal-day-detail-title { font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent); }
 </style>
@@ -750,81 +779,39 @@
 
   <!-- CALENDAR TAB -->
   <div id="ops-calendar" class="ops-panel" style="display:none;">
-    <div style="display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start;">
-
-      <!-- New assignment form (same as list view) -->
-      <div class="card" style="position:sticky;top:20px;">
-        <div class="card-title">➕ New Assignment</div>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label>Property</label>
-          <select id="ops-cal-property"><option value="">— Select Property —</option></select>
-        </div>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label>Cleaner</label>
-          <select id="ops-cal-cleaner"><option value="">— Select Cleaner —</option></select>
-        </div>
-        <div class="form-grid" style="margin-bottom:12px;">
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="ops-cal-date">
-          </div>
-          <div class="form-group">
-            <label>Time</label>
-            <input type="time" id="ops-cal-time" value="10:00">
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label>Job Type</label>
-          <select id="ops-cal-type">
-            <option value="cleaning">🧹 Cleaning</option>
-            <option value="inspection">🔍 Inspection</option>
-            <option value="maintenance">🔧 Maintenance</option>
-            <option value="other">📋 Other</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin-bottom:16px;">
-          <label>Notes</label>
-          <textarea id="ops-cal-notes" placeholder="Special instructions…" style="height:60px;resize:none;"></textarea>
-        </div>
-        <button class="btn btn-green" style="width:100%;" onclick="addScheduleFromCal()">✓ Schedule Job</button>
-        <div id="ops-cal-alert" style="margin-top:12px;"></div>
-        <!-- Legend -->
-        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Legend</div>
-          <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
-            <div style="display:flex;align-items:center;gap:8px;"><span class="cal-chip cleaning" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;"></span>Cleaning</div>
-            <div style="display:flex;align-items:center;gap:8px;"><span class="cal-chip inspection" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;"></span>Inspection</div>
-            <div style="display:flex;align-items:center;gap:8px;"><span class="cal-chip maintenance" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;"></span>Maintenance</div>
-            <div style="display:flex;align-items:center;gap:8px;"><span class="cal-chip other" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;"></span>Other</div>
-          </div>
-        </div>
+    <!-- Toolbar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-secondary" onclick="calPrev()" style="padding:8px 14px;font-size:18px;line-height:1;">‹</button>
+        <button class="btn btn-secondary" onclick="calGoToday()" style="padding:8px 14px;font-size:12px;">Today</button>
+        <button class="btn btn-secondary" onclick="calNext()" style="padding:8px 14px;font-size:18px;line-height:1;">›</button>
       </div>
-
-      <!-- Calendar -->
-      <div>
-        <!-- Month navigation -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <button class="btn btn-secondary" onclick="calPrevMonth()" style="padding:8px 16px;">‹ Prev</button>
-          <div id="cal-month-label" style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);"></div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-secondary" onclick="calGoToday()" style="padding:8px 14px;font-size:12px;">Today</button>
-            <button class="btn btn-secondary" onclick="calNextMonth()" style="padding:8px 16px;">Next ›</button>
-          </div>
-        </div>
-
-        <!-- Day-of-week headers -->
-        <div class="cal-grid-header">
-          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div>
-          <div>Thu</div><div>Fri</div><div>Sat</div>
-        </div>
-
-        <!-- Calendar grid -->
-        <div id="cal-grid"></div>
-
-        <!-- Expanded day detail panel -->
-        <div id="cal-day-detail" style="display:none;margin-top:16px;"></div>
+      <div id="cal-month-label" style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);flex:1;text-align:center;"></div>
+      <div style="display:flex;gap:4px;">
+        <button id="cal-btn-day"   class="btn btn-secondary" onclick="setCalView('day')"   style="padding:7px 14px;font-size:12px;">Day</button>
+        <button id="cal-btn-week"  class="btn btn-secondary" onclick="setCalView('week')"  style="padding:7px 14px;font-size:12px;">Week</button>
+        <button id="cal-btn-month" class="btn btn-secondary" onclick="setCalView('month')" style="padding:7px 14px;font-size:12px;">Month</button>
       </div>
     </div>
+
+    <!-- Legend -->
+    <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);"><span style="width:12px;height:12px;border-radius:2px;background:rgba(91,200,152,0.4);border-left:3px solid var(--green);flex-shrink:0;display:inline-block;"></span>Cleaning</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);"><span style="width:12px;height:12px;border-radius:2px;background:rgba(144,224,239,0.25);border-left:3px solid var(--accent);flex-shrink:0;display:inline-block;"></span>Inspection</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);"><span style="width:12px;height:12px;border-radius:2px;background:rgba(224,112,112,0.25);border-left:3px solid #e07070;flex-shrink:0;display:inline-block;"></span>Maintenance</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);"><span style="width:12px;height:12px;border-radius:2px;background:rgba(90,143,168,0.2);border-left:3px solid var(--text-muted);flex-shrink:0;display:inline-block;"></span>Other</div>
+    </div>
+
+    <!-- Day-of-week headers (shown for week/month views) -->
+    <div class="cal-grid-header" id="cal-dow-header">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+
+    <!-- Calendar grid (month/week) or day panel -->
+    <div id="cal-grid"></div>
+
+    <!-- Expanded day detail (month view click) -->
+    <div id="cal-day-detail" style="display:none;margin-top:16px;"></div>
   </div>
 
   <!-- LIST VIEW TAB (renamed from ops-schedule) -->
@@ -889,7 +876,7 @@
         <div class="form-group" style="margin-bottom:12px;"><label>Property Name</label><input type="text" id="ops-new-prop-name" placeholder="e.g. Dream Huron"></div>
         <div class="form-group" style="margin-bottom:12px;"><label>Address</label><input type="text" id="ops-new-prop-address" placeholder="Street address"></div>
         <div class="form-group" style="margin-bottom:12px;"><label>Brand / Group</label>
-          <select id="ops-new-prop-group">
+          <select id="ops-new-prop-group" onchange="toggleCustomGroup(this)">
             <option value="Dream">Dream</option>
             <option value="Thomas">Thomas</option>
             <option value="Dwellish">Dwellish</option>
@@ -900,8 +887,12 @@
             <option value="Ethos">Ethos</option>
             <option value="Angela">Angela</option>
             <option value="Daniel">Daniel</option>
-            <option value="Other">Other</option>
+            <option value="Other">Other (custom…)</option>
           </select>
+        </div>
+        <div class="form-group" id="ops-custom-group-wrap" style="margin-bottom:12px;display:none;">
+          <label>Custom Brand / Group Name</label>
+          <input type="text" id="ops-new-prop-custom-group" placeholder="Enter new brand or group name">
         </div>
         <div class="form-group" style="margin-bottom:16px;"><label>Notes</label><textarea id="ops-new-prop-notes" placeholder="Parking, access codes, special instructions…" style="height:70px;resize:none;"></textarea></div>
         <button class="btn" style="width:100%;" onclick="addOpsProperty()">Add Property</button>
@@ -4983,34 +4974,97 @@ function stopFallbackPolling() {
 // ==========================================
 // CALENDAR — month grid for Operations tab
 // ==========================================
+// ==========================================
+// CALENDAR — Day / Week / Month views
+// ==========================================
 let calYear  = new Date().getFullYear();
 let calMonth = new Date().getMonth(); // 0-indexed
+let calDay   = new Date().getDate();
+let calView  = 'month'; // 'day' | 'week' | 'month'
 let calSelectedDate = null;
+
+function setCalView(v) {
+  calView = v;
+  // Update active button highlight
+  ['day','week','month'].forEach(x => {
+    const btn = document.getElementById(`cal-btn-${x}`);
+    if (btn) btn.classList.toggle('cal-view-active', x === v);
+  });
+  // Show/hide day-of-week header row (only for week/month)
+  const dowHeader = document.getElementById('cal-dow-header');
+  if (dowHeader) dowHeader.style.display = v === 'day' ? 'none' : '';
+  // Hide day-detail panel when switching views
+  const dd = document.getElementById('cal-day-detail');
+  if (dd) dd.style.display = 'none';
+  calSelectedDate = null;
+  renderCalendar();
+}
 
 function calGoToday() {
   const now = new Date();
   calYear  = now.getFullYear();
   calMonth = now.getMonth();
+  calDay   = now.getDate();
   calSelectedDate = null;
-  document.getElementById('cal-day-detail').style.display = 'none';
+  const dd = document.getElementById('cal-day-detail');
+  if (dd) dd.style.display = 'none';
   renderCalendar();
 }
-function calPrevMonth() {
-  calMonth--;
-  if (calMonth < 0) { calMonth = 11; calYear--; }
+
+function calPrev() {
+  if (calView === 'month') {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+  } else if (calView === 'week') {
+    const d = new Date(calYear, calMonth, calDay);
+    d.setDate(d.getDate() - 7);
+    calYear = d.getFullYear(); calMonth = d.getMonth(); calDay = d.getDate();
+  } else {
+    const d = new Date(calYear, calMonth, calDay);
+    d.setDate(d.getDate() - 1);
+    calYear = d.getFullYear(); calMonth = d.getMonth(); calDay = d.getDate();
+  }
   calSelectedDate = null;
-  document.getElementById('cal-day-detail').style.display = 'none';
+  const dd = document.getElementById('cal-day-detail');
+  if (dd) dd.style.display = 'none';
   renderCalendar();
 }
-function calNextMonth() {
-  calMonth++;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
+
+function calNext() {
+  if (calView === 'month') {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+  } else if (calView === 'week') {
+    const d = new Date(calYear, calMonth, calDay);
+    d.setDate(d.getDate() + 7);
+    calYear = d.getFullYear(); calMonth = d.getMonth(); calDay = d.getDate();
+  } else {
+    const d = new Date(calYear, calMonth, calDay);
+    d.setDate(d.getDate() + 1);
+    calYear = d.getFullYear(); calMonth = d.getMonth(); calDay = d.getDate();
+  }
   calSelectedDate = null;
-  document.getElementById('cal-day-detail').style.display = 'none';
+  const dd = document.getElementById('cal-day-detail');
+  if (dd) dd.style.display = 'none';
   renderCalendar();
 }
 
 function renderCalendar() {
+  if (calView === 'month') renderCalMonth();
+  else if (calView === 'week') renderCalWeek();
+  else renderCalDay();
+}
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
+function dateStr(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+function fmtCalLabel(y, m, d) {
+  return new Date(y, m, d).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+}
+
+// ── MONTH VIEW ─────────────────────────────────────────────────────────────────
+function renderCalMonth() {
   const label = document.getElementById('cal-month-label');
   const grid  = document.getElementById('cal-grid');
   if (!label || !grid) return;
@@ -5018,221 +5072,234 @@ function renderCalendar() {
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   label.textContent = `${monthNames[calMonth]} ${calYear}`;
 
+  // Set grid to 7-col month layout
+  grid.className = '';
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(7,1fr)';
+  grid.style.gap = '2px';
+
   const props    = opsGetProperties();
   const cleaners = opsGetCleaners();
   const schedules = opsGetSchedules();
-
-  // Build a map: dateStr → [schedule, …]
-  const byDate = {};
-  schedules.forEach(s => {
-    if (!byDate[s.date]) byDate[s.date] = [];
-    byDate[s.date].push(s);
-  });
-
   const today    = new Date().toISOString().slice(0,10);
-  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+
+  const byDate = {};
+  schedules.forEach(s => { if (!byDate[s.date]) byDate[s.date] = []; byDate[s.date].push(s); });
+
+  const firstDay    = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
-
   const cells = [];
 
-  // Leading days from previous month
   for (let i = firstDay - 1; i >= 0; i--) {
-    const d = daysInPrev - i;
     const m = calMonth === 0 ? 11 : calMonth - 1;
     const y = calMonth === 0 ? calYear - 1 : calYear;
-    cells.push({ day: d, month: m, year: y, current: false });
+    cells.push({ day: daysInPrev - i, month: m, year: y, current: false });
   }
-  // Current month days
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({ day: d, month: calMonth, year: calYear, current: true });
-  }
-  // Trailing days from next month
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, month: calMonth, year: calYear, current: true });
   const remaining = 7 - (cells.length % 7);
   if (remaining < 7) {
     const m = calMonth === 11 ? 0 : calMonth + 1;
     const y = calMonth === 11 ? calYear + 1 : calYear;
-    for (let d = 1; d <= remaining; d++) {
-      cells.push({ day: d, month: m, year: y, current: false });
-    }
+    for (let d = 1; d <= remaining; d++) cells.push({ day: d, month: m, year: y, current: false });
   }
 
   grid.innerHTML = cells.map(cell => {
-    const dateStr = `${cell.year}-${String(cell.month+1).padStart(2,'0')}-${String(cell.day).padStart(2,'0')}`;
-    const jobs = byDate[dateStr] || [];
-    const isToday    = dateStr === today;
-    const isSelected = dateStr === calSelectedDate;
-    const classes    = ['cal-day', !cell.current ? 'other-month' : '', isToday ? 'today' : '', isSelected ? 'selected' : ''].filter(Boolean).join(' ');
-
-    const MAX_CHIPS = 3;
-    const chips = jobs.slice(0, MAX_CHIPS).map(s => {
+    const ds = dateStr(cell.year, cell.month, cell.day);
+    const jobs = byDate[ds] || [];
+    const isToday    = ds === today;
+    const isSelected = ds === calSelectedDate;
+    const cls = ['cal-day', !cell.current ? 'other-month' : '', isToday ? 'today' : '', isSelected ? 'selected' : ''].filter(Boolean).join(' ');
+    const MAX = 3;
+    const chips = jobs.slice(0, MAX).map(s => {
       const prop    = props.find(p => p.id === s.propertyId);
       const cleaner = cleaners.find(c => c.id === s.cleanerId);
-      const label   = prop ? prop.name.replace(/^(Dream|Thomas|Dwellish|Lotus|Kinga|Marco|Village Inn|Ethos|Angela|Daniel)\s*/i,'') : '—';
-      const tip     = `${prop?.name||'?'} · ${cleaner?.name||'?'} · ${s.time||''}`;
-      return `<span class="cal-chip ${s.type}" title="${tip}" onclick="event.stopPropagation();calOpenJob('${s.id}')">${label}</span>`;
+      const lbl = prop ? prop.name.replace(/^(Dream|Thomas|Dwellish|Lotus|Kinga|Marco|Village Inn|Ethos|Angela|Daniel)\s*/i,'') : '—';
+      return `<span class="cal-chip ${s.type}" title="${prop?.name||'?'} · ${cleaner?.name||'?'} · ${s.time||''}" onclick="event.stopPropagation();calOpenJob('${s.id}')">${lbl}</span>`;
     }).join('');
-
-    const more = jobs.length > MAX_CHIPS
-      ? `<div class="cal-more">+${jobs.length - MAX_CHIPS} more</div>` : '';
-
-    return `<div class="${classes}" onclick="calSelectDay('${dateStr}')">
-      <div class="cal-day-num">${cell.day}</div>
-      ${chips}${more}
+    const more = jobs.length > MAX ? `<div class="cal-more">+${jobs.length - MAX} more</div>` : '';
+    return `<div class="${cls}" onclick="calSelectDay('${ds}')">
+      <div class="cal-day-num">${cell.day}</div>${chips}${more}
     </div>`;
   }).join('');
 }
 
-function calSelectDay(dateStr) {
-  calSelectedDate = dateStr;
-  renderCalendar();          // re-render to show selection highlight
-  renderCalDayDetail(dateStr);
-  // Pre-fill the new-assignment date field with the clicked day
-  const dateInput = document.getElementById('ops-cal-date');
-  if (dateInput) dateInput.value = dateStr;
+// ── WEEK VIEW ──────────────────────────────────────────────────────────────────
+function renderCalWeek() {
+  const label = document.getElementById('cal-month-label');
+  const grid  = document.getElementById('cal-grid');
+  if (!label || !grid) return;
+
+  // Find the Sunday that starts the week containing calDay
+  const anchor = new Date(calYear, calMonth, calDay);
+  const startOfWeek = new Date(anchor);
+  startOfWeek.setDate(anchor.getDate() - anchor.getDay()); // go back to Sunday
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+  const fmtShort = d => d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  label.textContent = `${fmtShort(startOfWeek)} – ${fmtShort(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+
+  const props    = opsGetProperties();
+  const cleaners = opsGetCleaners();
+  const schedules = opsGetSchedules();
+  const todayStr  = new Date().toISOString().slice(0,10);
+
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    days.push(d);
+  }
+
+  grid.innerHTML = '';
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(7,1fr)';
+  grid.style.gap = '6px';
+
+  grid.innerHTML = days.map(d => {
+    const ds = d.toISOString().slice(0,10);
+    const isToday = ds === todayStr;
+    const jobs = schedules.filter(s => s.date === ds)
+      .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+    const dayName = d.toLocaleDateString('en-US', { weekday:'short' });
+    const dayNum  = d.getDate();
+    const jobHtml = jobs.map(s => {
+      const prop    = props.find(p => p.id === s.propertyId);
+      const cleaner = cleaners.find(c => c.id === s.cleanerId);
+      const title   = prop ? prop.name.replace(/^(Dream|Thomas|Dwellish|Lotus|Kinga|Marco|Village Inn|Ethos|Angela|Daniel)\s*/i,'') : '—';
+      return `<div class="cal-week-job ${s.type}" onclick="calOpenJob('${s.id}')">
+        <div class="cal-week-job-title">${title}</div>
+        <div class="cal-week-job-meta">${s.time ? '🕐 '+s.time+' · ' : ''}👤 ${cleaner?.name||'—'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="cal-week-col${isToday ? ' today' : ''}">
+      <div class="cal-week-col-header">
+        <div class="cal-week-col-dayname">${dayName}</div>
+        <div class="cal-week-col-daynum${isToday ? ' today-num' : ''}">${dayNum}</div>
+      </div>
+      ${jobHtml || '<div style="padding:10px;font-size:11px;color:var(--text-muted);text-align:center;">—</div>'}
+    </div>`;
+  }).join('');
 }
+
+// ── DAY VIEW ───────────────────────────────────────────────────────────────────
+function renderCalDay() {
+  const label = document.getElementById('cal-month-label');
+  const grid  = document.getElementById('cal-grid');
+  if (!label || !grid) return;
+
+  const d  = new Date(calYear, calMonth, calDay);
+  label.textContent = d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+
+  const ds       = dateStr(calYear, calMonth, calDay);
+  const props    = opsGetProperties();
+  const cleaners = opsGetCleaners();
+  const jobs     = opsGetSchedules()
+    .filter(s => s.date === ds)
+    .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+
+  grid.innerHTML = '';
+  grid.style.display = 'block';
+
+  if (jobs.length === 0) {
+    grid.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">📅</div>No jobs scheduled for this day. Add one in List View.</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = jobs.map(s => {
+    const prop    = props.find(p => p.id === s.propertyId);
+    const cleaner = cleaners.find(c => c.id === s.cleanerId);
+    const commentCount = opsGetComments(s.id).length;
+    const photoCount   = prop ? opsGetPhotos(prop.id).length : 0;
+    return `<div class="cal-day-view-job">
+      <div class="cal-day-view-time">${s.time || '—'}</div>
+      <div class="cal-day-view-bar ${s.type}"></div>
+      <div class="cal-day-view-body">
+        <div class="cal-day-view-title">${prop?.name || '—'}</div>
+        <div class="cal-day-view-meta">
+          <span class="ops-status-badge ${s.type}">${s.type}</span>
+          &nbsp;·&nbsp; 👤 ${cleaner?.name || '—'}
+          ${prop ? `&nbsp;·&nbsp; 🏘 ${prop.group}` : ''}
+        </div>
+        ${s.notes ? `<div style="font-size:12px;color:var(--text-muted);font-style:italic;margin-top:4px;">📝 ${s.notes}</div>` : ''}
+        <div class="ops-job-actions" style="margin-top:8px;">
+          <button class="ops-action-btn" onclick="openCommentModal('${s.id}')">💬 Comments${commentCount > 0 ? ` (${commentCount})` : ''}</button>
+          ${prop ? `<button class="ops-action-btn" onclick="openPhotoModal('${prop.id}','${prop.name.replace(/'/g,"\\'")}')">📷 Photos${photoCount > 0 ? ` (${photoCount})` : ''}</button>` : ''}
+          <button class="ops-action-btn danger" onclick="calDeleteJob('${s.id}','${ds}')">✕ Remove</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calSelectDay(ds) {
+  calSelectedDate = ds;
+  renderCalMonth(); // re-render to show selection
+  renderCalDayDetail(ds);
+}
+
+function calOpenJob(scheduleId) { openCommentModal(scheduleId); }
 
 function renderCalDayDetail(dateStr) {
   const detail = document.getElementById('cal-day-detail');
   if (!detail) return;
-
   const props    = opsGetProperties();
   const cleaners = opsGetCleaners();
   const jobs     = opsGetSchedules().filter(s => s.date === dateStr);
-
-  const dt = new Date(dateStr + 'T00:00:00');
-  const label = dt.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const label    = fmtCalLabel(...dateStr.split('-').map((v,i) => i===1?+v-1:+v));
 
   if (jobs.length === 0) {
     detail.style.display = 'block';
-    detail.innerHTML = `
-      <div class="card">
-        <div class="cal-day-detail-header">
-          <div class="cal-day-detail-title">${label}</div>
-          <button onclick="document.getElementById('cal-day-detail').style.display='none';calSelectedDate=null;renderCalendar();" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button>
-        </div>
-        <div style="color:var(--text-muted);font-size:13px;">No jobs scheduled. Fill in the form to add one.</div>
-      </div>`;
+    detail.innerHTML = `<div class="card"><div class="cal-day-detail-header"><div class="cal-day-detail-title">${label}</div><button onclick="document.getElementById('cal-day-detail').style.display='none';calSelectedDate=null;renderCalendar();" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button></div><div style="color:var(--text-muted);font-size:13px;">No jobs scheduled. Add one in List View.</div></div>`;
     return;
   }
 
-  const jobCards = jobs
-    .sort((a,b) => (a.time||'').localeCompare(b.time||''))
-    .map(s => {
-      const prop    = props.find(p => p.id === s.propertyId);
-      const cleaner = cleaners.find(c => c.id === s.cleanerId);
-      const commentCount = opsGetComments(s.id).length;
-      const photoCount   = prop ? opsGetPhotos(prop.id).length : 0;
-      return `
-        <div class="ops-job-card">
-          <div class="ops-job-status ${s.type}"></div>
-          <div class="ops-job-body">
-            <div class="ops-job-title">${prop?.name || '—'}</div>
-            <div class="ops-job-meta">
-              <span class="ops-status-badge ${s.type}">${s.type}</span>
-              &nbsp;·&nbsp; 🕐 ${s.time || '—'}
-              &nbsp;·&nbsp; 👤 ${cleaner?.name || '—'}
-            </div>
-            ${s.notes ? `<div class="ops-job-notes">📝 ${s.notes}</div>` : ''}
-            <div class="ops-job-actions">
-              <button class="ops-action-btn" onclick="openCommentModal('${s.id}')">
-                💬 Comments${commentCount > 0 ? ` (${commentCount})` : ''}
-              </button>
-              ${prop ? `<button class="ops-action-btn" onclick="openPhotoModal('${prop.id}','${prop.name.replace(/'/g,"\\'")}')">
-                📷 Photos${photoCount > 0 ? ` (${photoCount})` : ''}
-              </button>` : ''}
-              <button class="ops-action-btn danger" onclick="calDeleteJob('${s.id}','${dateStr}')">✕ Remove</button>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
+  const jobCards = jobs.sort((a,b) => (a.time||'').localeCompare(b.time||'')).map(s => {
+    const prop    = props.find(p => p.id === s.propertyId);
+    const cleaner = cleaners.find(c => c.id === s.cleanerId);
+    const cc = opsGetComments(s.id).length;
+    const pc = prop ? opsGetPhotos(prop.id).length : 0;
+    return `<div class="ops-job-card">
+      <div class="ops-job-status ${s.type}"></div>
+      <div class="ops-job-body">
+        <div class="ops-job-title">${prop?.name||'—'}</div>
+        <div class="ops-job-meta"><span class="ops-status-badge ${s.type}">${s.type}</span> &nbsp;·&nbsp; 🕐 ${s.time||'—'} &nbsp;·&nbsp; 👤 ${cleaner?.name||'—'}</div>
+        ${s.notes?`<div class="ops-job-notes">📝 ${s.notes}</div>`:''}
+        <div class="ops-job-actions">
+          <button class="ops-action-btn" onclick="openCommentModal('${s.id}')">💬 Comments${cc>0?` (${cc})`:''}</button>
+          ${prop?`<button class="ops-action-btn" onclick="openPhotoModal('${prop.id}','${prop.name.replace(/'/g,"\\'")}')">📷 Photos${pc>0?` (${pc})`:''}</button>`:''}
+          <button class="ops-action-btn danger" onclick="calDeleteJob('${s.id}','${dateStr}')">✕ Remove</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 
   detail.style.display = 'block';
-  detail.innerHTML = `
-    <div class="card">
-      <div class="cal-day-detail-header">
-        <div class="cal-day-detail-title">${label} <span style="font-size:14px;color:var(--text-muted);font-family:'DM Sans',sans-serif;">(${jobs.length} job${jobs.length>1?'s':''})</span></div>
-        <button onclick="document.getElementById('cal-day-detail').style.display='none';calSelectedDate=null;renderCalendar();" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button>
-      </div>
-      ${jobCards}
-    </div>`;
+  detail.innerHTML = `<div class="card"><div class="cal-day-detail-header"><div class="cal-day-detail-title">${label} <span style="font-size:14px;color:var(--text-muted);font-family:'DM Sans',sans-serif;">(${jobs.length} job${jobs.length>1?'s':''})</span></div><button onclick="document.getElementById('cal-day-detail').style.display='none';calSelectedDate=null;renderCalendar();" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button></div>${jobCards}</div>`;
 }
 
-function calOpenJob(scheduleId) {
-  // Open the comment modal directly when a chip is clicked
-  openCommentModal(scheduleId);
-}
-
-async function calDeleteJob(scheduleId, dateStr) {
-  if (!confirm('Remove this scheduled job? The payroll entry will also be removed.')) return;
+async function calDeleteJob(scheduleId, ds) {
+  if (!confirm('Remove this job? The payroll entry will also be removed.')) return;
   const schedule = opsGetSchedules().find(s => s.id === scheduleId);
   await removeScheduleFromPayroll(schedule?.entryId);
   await opsSave('ops_schedules', opsGetSchedules().filter(s => s.id !== scheduleId));
   renderCalendar();
-  renderCalDayDetail(dateStr);
+  if (calView === 'month' && calSelectedDate) renderCalDayDetail(calSelectedDate);
   renderOpsScheduleBoard();
 }
 
-// Calendar-specific schedule form (mirrors addSchedule but uses cal-prefixed inputs)
-async function addScheduleFromCal() {
-  const propId    = document.getElementById('ops-cal-property').value;
-  const cleanerId = document.getElementById('ops-cal-cleaner').value;
-  const date      = document.getElementById('ops-cal-date').value;
-  const time      = document.getElementById('ops-cal-time').value;
-  const type      = document.getElementById('ops-cal-type').value;
-  const notes     = document.getElementById('ops-cal-notes').value.trim();
-  const alertEl   = document.getElementById('ops-cal-alert');
-
-  if (!propId || !cleanerId || !date) {
-    alertEl.innerHTML = `<div class="alert alert-error">⚠ Please select a property, cleaner, and date.</div>`;
-    setTimeout(() => alertEl.innerHTML = '', 3500);
-    return;
-  }
-
-  const schedule = { id: `sch_${Date.now()}`, propertyId: propId, cleanerId, date, time, type, notes, createdBy: currentUser, createdAt: new Date().toISOString() };
-
-  // Create payroll entry first, store its id on the schedule
-  const entryId = await syncScheduleToPayroll(schedule);
-  schedule.entryId = entryId;
-
-  await opsSave('ops_schedules', [...opsGetSchedules(), schedule]);
-
-  document.getElementById('ops-cal-property').value = '';
-  document.getElementById('ops-cal-cleaner').value  = '';
-  document.getElementById('ops-cal-notes').value    = '';
-
-  alertEl.innerHTML = `<div class="alert alert-success">✓ Job scheduled and added to payroll!</div>`;
-  setTimeout(() => alertEl.innerHTML = '', 3500);
-
-  renderCalendar();
-  if (date) renderCalDayDetail(date);
-}
-
-// Extend showOpsTab and initOpsScheduleTab to init the calendar dropdowns too
 function initCalTab() {
-  const props    = opsGetProperties();
-  const cleaners = opsGetCleaners();
-
-  const propSel = document.getElementById('ops-cal-property');
-  if (propSel) {
-    const prev = propSel.value;
-    propSel.innerHTML = '<option value="">— Select Property —</option>' +
-      props.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-    if (prev) propSel.value = prev;
-  }
-  const cleanerSel = document.getElementById('ops-cal-cleaner');
-  if (cleanerSel) {
-    const prev = cleanerSel.value;
-    cleanerSel.innerHTML = '<option value="">— Select Cleaner —</option>' +
-      cleaners.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-    if (prev) cleanerSel.value = prev;
-  }
-  // Default date to today if empty
-  const dateInput = document.getElementById('ops-cal-date');
-  if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0,10);
-
-  renderCalendar();
+  // Set initial view button active state
+  setCalView(calView);
+  // Reset to today's date anchor if not set
+  const now = new Date();
+  if (!calYear) calYear = now.getFullYear();
+  if (calMonth === undefined) calMonth = now.getMonth();
+  if (!calDay) calDay = now.getDate();
 }
+
 
 // ==========================================
 // OPERATIONS — scheduling, comments, photos
@@ -5264,7 +5331,7 @@ function showOpsTab(id) {
   document.getElementById(id).style.display = '';
   event.target.classList.add('active');
   if (id === 'ops-schedule')   initOpsScheduleTab();
-  if (id === 'ops-calendar')   initCalTab();
+  if (id === 'ops-calendar')   { initCalTab(); renderCalendar(); }
   if (id === 'ops-properties') renderOpsProperties();
   if (id === 'ops-cleaners')   renderOpsCleaners();
 }
@@ -5484,6 +5551,7 @@ async function addSchedule() {
   alertEl.innerHTML = `<div class="alert alert-success">✓ Job scheduled and added to payroll!</div>`;
   setTimeout(() => alertEl.innerHTML = '', 3500);
   renderOpsScheduleBoard();
+  if (date) { const [y,m,d] = date.split('-').map(Number); calYear=y; calMonth=m-1; calDay=d; }
   renderCalendar();
 }
 
@@ -5525,16 +5593,47 @@ function renderOpsProperties() {
   }).join('');
 }
 
+function toggleCustomGroup(sel) {
+  const wrap = document.getElementById('ops-custom-group-wrap');
+  if (wrap) wrap.style.display = sel.value === 'Other' ? '' : 'none';
+  if (sel.value !== 'Other') {
+    const input = document.getElementById('ops-new-prop-custom-group');
+    if (input) input.value = '';
+  }
+}
+
 async function addOpsProperty() {
   const name    = document.getElementById('ops-new-prop-name').value.trim();
   const address = document.getElementById('ops-new-prop-address').value.trim();
-  const group   = document.getElementById('ops-new-prop-group').value;
+  const groupSel = document.getElementById('ops-new-prop-group').value;
+  const customGroup = document.getElementById('ops-new-prop-custom-group').value.trim();
+  const group   = groupSel === 'Other' ? customGroup : groupSel;
   const notes   = document.getElementById('ops-new-prop-notes').value.trim();
   const alertEl = document.getElementById('ops-prop-alert');
+
   if (!name) { alertEl.innerHTML = `<div class="alert alert-error">⚠ Property name is required.</div>`; setTimeout(() => alertEl.innerHTML='',3000); return; }
+  if (groupSel === 'Other' && !customGroup) { alertEl.innerHTML = `<div class="alert alert-error">⚠ Please enter a brand/group name.</div>`; setTimeout(() => alertEl.innerHTML='',3000); return; }
   if (opsGetProperties().find(p => p.name.toLowerCase() === name.toLowerCase())) {
     alertEl.innerHTML = `<div class="alert alert-error">⚠ Property already exists.</div>`; setTimeout(() => alertEl.innerHTML='',3000); return;
   }
+
+  // If this is a new custom group, add it as an option in the dropdown for future use
+  if (groupSel === 'Other' && customGroup) {
+    const sel = document.getElementById('ops-new-prop-group');
+    const alreadyExists = Array.from(sel.options).some(o => o.value === customGroup);
+    if (!alreadyExists) {
+      const newOpt = document.createElement('option');
+      newOpt.value = customGroup;
+      newOpt.textContent = customGroup;
+      // Insert before the "Other" option
+      const otherOpt = Array.from(sel.options).find(o => o.value === 'Other');
+      sel.insertBefore(newOpt, otherOpt);
+      sel.value = customGroup;
+    }
+    document.getElementById('ops-custom-group-wrap').style.display = 'none';
+    document.getElementById('ops-new-prop-custom-group').value = '';
+  }
+
   const prop = { id: `prop_${Date.now()}`, name, address, group, notes };
   await opsSave('ops_properties', [...opsGetProperties(), prop]);
   document.getElementById('ops-new-prop-name').value = '';
