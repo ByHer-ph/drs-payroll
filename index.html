@@ -1302,7 +1302,22 @@ async function sbSaveBillingMisc(key, rows) {
 
 // ---- Employee rate writes ----
 async function sbSaveEmployeeRate(emp) {
-  await sbUpsert('employee_rates', { name: emp.name, property: emp.property, clean: emp.clean, inspect: emp.inspect });
+  // Use PATCH (targeted update by name+property) so Supabase updates the existing
+  // row in place rather than inserting a duplicate. Falls back to POST if the row
+  // doesn't exist yet (i.e. it's genuinely new).
+  const existing = db.employees.find(e => e.name === emp.name && e.property === emp.property);
+  const payload = { name: emp.name, property: emp.property, clean: emp.clean, inspect: emp.inspect };
+  if (existing) {
+    // Row exists — PATCH it by the composite key
+    const r = await fetch(
+      `${SB_URL}/rest/v1/employee_rates?name=eq.${encodeURIComponent(emp.name)}&property=eq.${encodeURIComponent(emp.property)}`,
+      { method: 'PATCH', headers: { ...SB_HDR, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) }
+    );
+    if (!r.ok) console.error('sbSaveEmployeeRate PATCH error:', await r.text());
+  } else {
+    // Row doesn't exist — INSERT it
+    await sbUpsert('employee_rates', payload);
+  }
 }
 async function sbDeleteEmployeeRate(name, property) {
   await sbDelete('employee_rates', `name=eq.${encodeURIComponent(name)}&property=eq.${encodeURIComponent(property)}`);
@@ -1354,7 +1369,15 @@ async function loadFromSupabase() {
       db.employees = getDefaultEmployees();
       await Promise.all(db.employees.map(emp => sbSaveEmployeeRate(emp)));
     } else {
-      db.employees = employees.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
+      // Deduplicate by name+property — if duplicates exist in the DB (from a prior
+      // upsert-without-unique-constraint bug), keep the row with the highest clean rate.
+      const seen = new Map();
+      employees.forEach(e => {
+        const key = `${e.name}||${e.property}`;
+        const prev = seen.get(key);
+        if (!prev || e.clean > prev.clean) seen.set(key, e);
+      });
+      db.employees = Array.from(seen.values()).map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
     }
 
     if (billingRates.length === 0) {
@@ -3190,11 +3213,18 @@ function renderDbEmployees() {
   }).join('') || '<tr><td colspan="5" class="empty">No records found.</td></tr>';
 }
 
-function updateEmpRate(empName, empProp, field, val) {
+async function updateEmpRate(empName, empProp, field, val) {
   const emp = db.employees.find(e => e.name === empName && e.property === empProp);
   if (!emp) return;
   emp[field] = parseFloat(val) || 0;
-  sbSaveEmployeeRate(emp);
+  await sbSaveEmployeeRate(emp);
+  // Re-fetch to confirm the save and remove any pre-existing duplicates
+  const rows = await sbGet('employee_rates', 'order=name.asc');
+  // Deduplicate by name+property (keep last seen, which is the one just updated)
+  const seen = new Map();
+  rows.forEach(r => { seen.set(`${r.name}||${r.property}`, r); });
+  db.employees = Array.from(seen.values()).map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
+  renderDbEmployees();
 }
 
 async function deleteEmpRate(empName, empProp) {
@@ -4841,7 +4871,9 @@ async function fetchAndPatchTable(table) {
       db.entries = rows.map(mapEntry);
     } else if (table === 'employee_rates') {
       const rows = await sbGet('employee_rates', 'order=name.asc');
-      db.employees = rows.map(mapEmployee);
+      const seen = new Map();
+      rows.forEach(r => { const k=`${r.name}||${r.property}`; if (!seen.has(k)||r.clean>seen.get(k).clean) seen.set(k,r); });
+      db.employees = Array.from(seen.values()).map(mapEmployee);
     } else if (table === 'billing_rates') {
       const rows = await sbGet('billing_rates', 'order=property.asc');
       db.billingRates = rows.map(mapBillingRate);
